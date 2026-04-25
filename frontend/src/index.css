@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200 dark:border-[#2a2a2a];
+  }
+  body {
+    @apply bg-white dark:bg-[#111111] text-gray-900 dark:text-gray-100;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-orange-500 text-white hover:bg-orange-600 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors;
+  }
+  
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200 dark:border-gray-800;
+  }
+  
+  .gradient-primary {
+    @apply bg-gradient-to-r from-orange-500 to-red-500;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent;
+  }
+}
+
+/* Cursor Hover Animations */
+@layer utilities {
+  /* Smooth hover scale animations */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-1 scale-[1.02];
+  }
+  
+  /* Button hover animations */
+  button, a, [role="button"] {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  button:hover, a:hover, [role="button"]:hover {
+    @apply transform scale-105;
+  }
+  
+  /* Card hover animations */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-hover:hover {
+    @apply shadow-lg -translate-y-1 scale-[1.02];
+  }
+  
+  /* Image hover animations */
+  img {
+    @apply transition-transform duration-300 ease-out;
+  }
+  
+  /* Input field hover animations */
+  input, textarea, select {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  input:hover, textarea:hover, select:hover {
+    @apply border-orange-300 dark:border-orange-700;
+  }
+  
+  /* Icon hover animations */
+  svg {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  button:hover svg, a:hover svg {
+    @apply transform scale-110;
+  }
+}
