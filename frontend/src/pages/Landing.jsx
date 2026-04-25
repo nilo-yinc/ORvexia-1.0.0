@@ -235,7 +235,7 @@ export const Landing = () => {
       <section className="py-24 border-y border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/[0.02]">
         <div className="max-w-7xl mx-auto px-6">
           <p className="text-center text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-16">
-            TRUSTED BY MODERN ENTERPRISE TEAMS
+            USED BY MODERN ENTERPRISES
           </p>
           <div className="flex flex-wrap justify-center items-center gap-x-20 gap-y-12 opacity-30 dark:opacity-20 grayscale group-hover:grayscale-0 transition-all duration-700">
             {['TECHCORP', 'DATAFLOW', 'INNOVATE', 'GLOBALSYNC', 'MODERNA'].map(name => (

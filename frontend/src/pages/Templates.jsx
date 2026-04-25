@@ -41,7 +41,7 @@ const workflowTemplates = [
   {
     id: 4,
     title: 'Auto-capture tool & process updates from Slack',
-    description: 'Automatically capture tool and process updates from Slack in a centralized changelog for your team.',
+    description: 'Automatically capture tool and process updates from Slack in a centralized changelog for your workspace.',
     category: 'Productivity',
     apps: ['Slack', 'Notion', 'Changelog'],
     uses: '6.2k',

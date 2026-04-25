@@ -234,7 +234,7 @@ export const Home = () => {
             {/* Help / Docs Card */}
             <div className="bg-gray-900 rounded-2xl p-6 text-white relative overflow-hidden">
               <h3 className="text-lg font-bold mb-2">Need help?</h3>
-              <p className="text-gray-400 text-xs mb-4">Explore our documentation or contact our 24/7 expert support team.</p>
+              <p className="text-gray-400 text-xs mb-4">Explore the documentation or contact 24/7 expert support.</p>
               <button className="w-full py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-semibold transition-all">
                 Read Documentation
               </button>

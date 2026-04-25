@@ -173,7 +173,7 @@ export const testimonials = [
     name: 'Michael Chen',
     role: 'Operations Director, DataFlow',
     avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200',
-    content: 'We saved 40+ hours per week automating our data pipelines. The self-healing capabilities are game-changing.',
+    content: 'Saved 40+ hours per week by automating data pipelines. The self-healing capabilities are game-changing.',
     rating: 5,
   },
   {
@@ -181,7 +181,7 @@ export const testimonials = [
     name: 'Emily Rodriguez',
     role: 'Product Manager, InnovateLabs',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
-    content: 'The prompt-to-workflow feature is pure magic. We went from idea to production in minutes, not days.',
+    content: 'The prompt-to-workflow feature is pure magic. Went from idea to production in minutes, not days.',
     rating: 5,
   },
 ];
@@ -215,7 +215,7 @@ export const features = [
   {
     icon: 'Globe',
     title: 'Universal Integrations',
-    description: 'Connect to 500+ apps and services. If it has an API, we can integrate it.',
+    description: 'Connect to 500+ apps and services. If it has an API, integration is possible.',
   },
 ];
 
@@ -224,7 +224,7 @@ export const pricingPlans = [
     name: 'Starter',
     price: '$29',
     period: '/month',
-    description: 'Perfect for individuals and small teams',
+    description: 'Perfect for individuals and small businesses',
     features: [
       '10 workflows',
       '1,000 executions/month',
@@ -238,14 +238,14 @@ export const pricingPlans = [
     name: 'Professional',
     price: '$99',
     period: '/month',
-    description: 'For growing teams and businesses',
+    description: 'For growing businesses',
     features: [
       'Unlimited workflows',
       '10,000 executions/month',
       'Advanced analytics',
       'Priority support',
       'Custom integrations',
-      'Team collaboration',
+      'Shared workspace collaboration',
       'Self-healing AI',
     ],
     highlighted: true,

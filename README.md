@@ -14,8 +14,8 @@ This leaves 90% of the workforce—Operations Managers, HR Leads, Small Business
 ## 💡 The Solution: Orvexia
 Orvexia is an **Agentic AI Platform** that democratizes software engineering. It allows users to build enterprise-grade automation workflows simply by speaking.
 
-**We don't just "chat." We build.**
-Our AI acts as a **Senior Workflow Architect** that translates intent into infrastructure, connects APIs, handles error logic, and deploys live workflows in seconds.
+**This platform does not just chat. It builds.**
+The AI acts as a **Senior Workflow Architect** that translates intent into infrastructure, connects APIs, handles error logic, and deploys live workflows in seconds.
 
 ---
 
@@ -44,11 +44,11 @@ Our AI acts as a **Senior Workflow Architect** that translates intent into infra
 
 ### 1. 🧠 AI Builder (Text-to-Software)
 The core of Orvexia. Users type a command like:
-> *"When I get an email about a bug, summarize it with AI, log it to Notion, and alert the #dev-team on Slack."*
+> *"When I get an email about a bug, summarize it with AI, log it to Notion, and alert the #dev channel on Slack."*
 The Agent intelligently selects the right tools, draws the connections, and configures the payloads automatically.
 
 ### 2. 🎨 Visual Workflow Editor
-We provide a "Glass Box" experience. Users can see exactly what the AI built using a drag-and-drop node graph (powered by React Flow). This ensures trust and allows for manual fine-tuning.
+Orvexia provides a "Glass Box" experience. Users can see exactly what the AI built using a drag-and-drop node graph (powered by React Flow). This ensures trust and allows for manual fine-tuning.
 
 ### 3. 📊 Real-Time Analytics Dashboard
 Track the ROI of automation.
@@ -57,17 +57,17 @@ Track the ROI of automation.
 - **Execution Trends:** See which workflows are driving value.
 
 ### 4. 🛡️ Consultant Mode (Proactive AI)
-Our AI doesn't just execute; it advises. If a user builds a risky workflow, the AI suggests improvements:
+The AI doesn't just execute; it advises. If a user builds a risky workflow, the AI suggests improvements:
 > *"I noticed you are creating a GitHub issue but didn't add a notification step. Should I add a Slack alert for you?"*
 
 ---
 
 ## 🔒 Security & Reliability
-We solve the "AI Hallucination" problem with a 3-Layer Defense System:
+Orvexia solves the "AI Hallucination" problem with a 3-layer defense system:
 
-1.  **Strict Schema Validation (Pydantic):** The AI is forced to output strict JSON matching our internal schemas. If it tries to invent a non-existent parameter, the backend rejects it before it reaches the UI.
-2.  **Deterministic Tool Sandboxing:** The AI cannot execute arbitrary code. It can *only* call pre-defined, safe functions from our `TOOLS_DB`.
-3.  **Human-in-the-Loop:** We favor "Co-piloting" over "Auto-piloting." The AI drafts the blueprint, but the human must verify the visual diagram before deployment.
+1.  **Strict Schema Validation (Pydantic):** The AI is forced to output strict JSON matching internal schemas. If it tries to invent a non-existent parameter, the backend rejects it before it reaches the UI.
+2.  **Deterministic Tool Sandboxing:** The AI cannot execute arbitrary code. It can *only* call pre-defined, safe functions from `TOOLS_DB`.
+3.  **Human-in-the-Loop:** The platform favors "co-piloting" over "auto-piloting." The AI drafts the blueprint, but the human must verify the visual diagram before deployment.
 
 ---
 
@@ -100,8 +100,8 @@ We solve the "AI Hallucination" problem with a 3-Layer Defense System:
 
 1. **Clone the Repo**
    ```bash
-   git clone [https://github.com/2232def/orvexia.git](https://github.com/2232def/orvexia.git)
-   cd orvexia
+   git clone git@github.com:nilo-yinc/ORvexia-1.0.0.git
+   cd ORvexia-1.0.0
 
 2. **Backend setup**
    ```bash
@@ -116,8 +116,5 @@ We solve the "AI Hallucination" problem with a 3-Layer Defense System:
     npm install
     npm run dev
 
-👥 Contributors
-[Anay Mishra] 
-[Dev Kumar Singh]
-[Niloy Mallik]
-[Abhijit Mondal]
+## Author
+Built and maintained by Niloy Mallik.
