@@ -1,450 +1,470 @@
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   ArrowRight,
   Check,
   Star,
   Zap,
   Globe,
-  Shield,
-  BarChart,
-  Sparkles,
   Layers,
-  Cpu,
+  Sparkles,
   MousePointer2,
-  Users,
-  Plus,
-  Settings,
-  Search
+  Shield,
+  Cpu,
+  BarChart,
+  X,
+  User,
+  Sun,
+  Moon,
+  Lock,
+  ArrowLeft,
+  ChevronRight,
+  Terminal,
+  Activity,
+  Box,
+  Share2,
+  Database,
+  Code,
+  GitBranch,
+  Search,
+  MessageSquare,
+  Mail
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { features, testimonials, pricingPlans } from '../utils/MockData';
+
+gsap.registerPlugin(ScrollTrigger);
+
+// --- PREMIUM COMPONENTS ---
+
+const Logo = () => (
+  <div className="flex items-center gap-3 group cursor-pointer">
+    <div className="relative w-10 h-10">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full text-accent transition-transform duration-500 group-hover:rotate-90">
+        <path 
+          d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="6"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-4 h-4 bg-accent rotate-45 group-hover:scale-125 transition-transform duration-300" />
+      </div>
+      <div className="absolute inset-0 rounded-full border border-accent/20 animate-pulse-slow scale-150" />
+    </div>
+    <span className="text-2xl font-black tracking-tighter text-white font-sans uppercase">
+      ORV<span className="text-accent">EXIA</span>
+    </span>
+  </div>
+);
+
+const KineticButton = ({ children, primary = false, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`
+      relative px-8 py-4 font-bold uppercase tracking-widest text-xs transition-all duration-300 overflow-hidden group
+      ${primary ? 'bg-accent text-white' : 'bg-white/5 text-white border border-white/10 hover:border-accent/40'}
+    `}
+  >
+    <div className="relative z-10 flex items-center gap-3">
+      {children}
+    </div>
+    <div className={`
+      absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out
+      ${primary ? 'hidden' : ''}
+    `} />
+    <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/30 group-hover:border-accent" />
+    <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-white/30 group-hover:border-accent" />
+  </button>
+);
+
+const IndustrialCard = ({ icon: Icon, title, description, index }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ delay: index * 0.1 }}
+    className="relative group p-8 bg-surface-1 border border-white/5 hover:border-accent/30 transition-all duration-500"
+  >
+    <div className="absolute top-4 right-4 font-mono text-[10px] text-white/20 group-hover:text-accent transition-colors">
+      ID_{String(index + 1).padStart(2, '0')}
+    </div>
+    
+    <div className="mb-6 inline-flex p-3 bg-accent/5 border border-accent/10 group-hover:bg-accent group-hover:text-white transition-all duration-500">
+      <Icon className="w-6 h-6 text-accent group-hover:text-white" />
+    </div>
+    
+    <h3 className="text-lg font-bold text-white mb-3 tracking-tight group-hover:translate-x-1 transition-transform uppercase">
+      {title}
+    </h3>
+    <p className="text-white/40 text-sm leading-relaxed font-medium uppercase tracking-wider">
+      {description}
+    </p>
+
+    <div className="absolute bottom-0 left-0 h-[2px] bg-accent transition-all duration-500 w-0 group-hover:w-full" />
+  </motion.div>
+);
+
+// --- SYSTEM SIMULATION COMPONENT ---
+const SystemSimulation = () => {
+  const [logs, setLogs] = useState([
+    'INIT_PROTOCOL_4.2',
+    'SYNCHRONIZING_NODES...',
+    'DATA_FLOW_STABLE'
+  ]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const logPool = [
+        'ACCESSING_UPSTREAM_API...',
+        'ENCRYPTING_PAYLOAD_L9',
+        'EXECUTING_LOGIC_GATE_X7',
+        'AUTHORIZING_NODE_ALPHA',
+        'OPTIMIZING_LATENCY...',
+        'RECURSIVE_CHECK_PASS',
+        'THROTTLING_INCOMING_OPS',
+        'SYSTEM_HEALTH: 100%'
+      ];
+      setLogs(prev => [...prev.slice(-3), logPool[Math.floor(Math.random() * logPool.length)]]);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative w-full h-full bg-surface-0 overflow-hidden flex flex-col">
+       {/* CRT Scanline Effect */}
+       <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-20" />
+       
+       {/* Background Grid */}
+       <div className="absolute inset-0 surface-dot-grid opacity-[0.05]" />
+
+       {/* Simulation Canvas */}
+       <div className="flex-1 relative p-8">
+          <svg className="w-full h-full" viewBox="0 0 400 400">
+             {/* Paths */}
+             <motion.path 
+               d="M 50 200 Q 200 50 350 200" 
+               stroke="rgba(255,95,31,0.2)" 
+               strokeWidth="1" 
+               fill="none" 
+               strokeDasharray="4 4"
+             />
+             <motion.path 
+               d="M 50 200 Q 200 350 350 200" 
+               stroke="rgba(255,95,31,0.2)" 
+               strokeWidth="1" 
+               fill="none" 
+               strokeDasharray="4 4"
+             />
+
+             {/* Animated Data Pulses */}
+             <motion.circle r="3" fill="#FF5F1F">
+                <animateMotion 
+                  dur="3s" 
+                  repeatCount="indefinite" 
+                  path="M 50 200 Q 200 50 350 200"
+                />
+             </motion.circle>
+             <motion.circle r="3" fill="#FF5F1F">
+                <animateMotion 
+                  dur="4s" 
+                  repeatCount="indefinite" 
+                  path="M 350 200 Q 200 350 50 200"
+                />
+             </motion.circle>
+
+             {/* Nodes */}
+             <g transform="translate(50, 200)">
+                <circle r="20" className="fill-surface-1 stroke-white/10" strokeWidth="1" />
+                <Mail className="w-5 h-5 text-accent -translate-x-2.5 -translate-y-2.5" />
+             </g>
+             <g transform="translate(350, 200)">
+                <circle r="20" className="fill-surface-1 stroke-white/10" strokeWidth="1" />
+                <MessageSquare className="w-5 h-5 text-white/40 -translate-x-2.5 -translate-y-2.5" />
+             </g>
+             <g transform="translate(200, 200)">
+                <circle r="25" className="fill-accent stroke-white/10 animate-pulse" strokeWidth="1" />
+                <Cpu className="w-6 h-6 text-white -translate-x-3 -translate-y-3" />
+             </g>
+          </svg>
+
+          {/* Floating UI elements */}
+          <motion.div 
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 4, repeat: Infinity }}
+            className="absolute top-10 right-10 p-3 bg-surface-1 border border-white/5 shadow-2xl"
+          >
+             <div className="flex flex-col gap-1">
+                <div className="w-8 h-1 bg-accent" />
+                <div className="w-4 h-1 bg-white/10" />
+             </div>
+          </motion.div>
+       </div>
+
+       {/* Log Stream Terminal */}
+       <div className="bg-obsidian border-t border-white/[0.05] p-4 font-mono text-[9px] h-24 flex flex-col justify-end">
+          {logs.map((log, i) => (
+            <div key={i} className="flex gap-4">
+               <span className="text-white/10">[{new Date().toLocaleTimeString()}]</span>
+               <span className={i === logs.length - 1 ? 'text-accent' : 'text-white/20'}>{log}</span>
+            </div>
+          ))}
+       </div>
+    </div>
+  );
+};
+
+// --- MAIN PAGE ---
 
 export const Landing = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
-  const handleGetStarted = async () => {
-    navigate('/home');
-  };
+  useEffect(() => {
+    // GSAP Entrance Animations
+    const ctx = gsap.context(() => {
+      gsap.from('.hero-title', {
+        y: 60,
+        opacity: 0,
+        duration: 1.2,
+        ease: 'power4.out',
+        stagger: 0.2
+      });
+      
+      gsap.from('.hero-mockup', {
+        scale: 0.8,
+        opacity: 0,
+        duration: 1.5,
+        ease: 'expo.out',
+        delay: 0.5
+      });
+    }, heroRef);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.2 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-obsidian text-white font-sans selection:bg-accent selection:text-white overflow-x-hidden uppercase">
+      
+      {/* --- GRID BACKGROUND --- */}
+      <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
+        <div className="absolute inset-0 surface-dot-grid" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-obsidian/50 to-obsidian" />
+      </div>
 
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-white/70 dark:bg-black/70 backdrop-blur-xl border-b border-gray-200 dark:border-[#1a1a1a]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-xl font-black tracking-tighter text-gray-900 dark:text-white">
-              ORVEXIA
-            </span>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-6 mr-4">
-              {['Features', 'Solutions', 'Pricing', 'Docs'].map(item => (
-                <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-medium text-gray-500 hover:text-orange-500 transition-colors">
-                  {item}
-                </a>
-              ))}
-            </div>
-            <button
-              onClick={() => navigate('/login')}
-              className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-orange-500 transition-colors"
+      {/* --- NAVBAR --- */}
+      <nav className="fixed top-0 left-0 w-full z-[100] px-8 py-6 flex items-center justify-between backdrop-blur-md bg-obsidian/20 border-b border-white/[0.03]">
+        <Logo />
+        <div className="hidden lg:flex items-center gap-12">
+          {['Infrastructure', 'Architecture', 'Integrations', 'Entity'].map((item) => (
+            <a 
+              key={item} 
+              href={`#${item.toLowerCase()}`} 
+              className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40 hover:text-accent transition-colors"
             >
-              Login
-            </button>
-            <button
-              onClick={handleGetStarted}
-              className="px-6 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-full hover:bg-orange-600 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all transform hover:-translate-y-0.5 active:scale-95"
-            >
-              Get Started Free
-            </button>
-          </div>
+              {item}
+            </a>
+          ))}
+        </div>
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => navigate('/login')}
+            className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 hover:text-white transition-colors"
+          >
+            Terminal Login
+          </button>
+          <KineticButton primary onClick={() => navigate('/home')}>
+            Initiate System
+          </KineticButton>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-orange-500/10 dark:bg-orange-500/5 rounded-full blur-[120px] -z-10 animate-pulse" />
-        <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-4xl mx-auto mb-16"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/5 border border-orange-500/20 text-orange-500 text-[10px] font-black tracking-[0.2em] mb-8">
-              <Sparkles className="w-3.5 h-3.5" />
-              INTELLIGENT AUTONOMY
-            </div>
-            <h1 className="text-6xl md:text-[92px] font-black text-gray-900 dark:text-white leading-[0.85] mb-8 tracking-tighter">
-              Automate the <br />
-              <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">impossible.</span>
+      {/* --- HERO SECTION --- */}
+      <section ref={heroRef} className="relative pt-48 pb-32 px-8 z-10">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+          
+          <div className="flex-1 text-left">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center gap-3 px-3 py-1 bg-accent/10 border border-accent/20 mb-8"
+            >
+              <div className="w-1.5 h-1.5 bg-accent animate-pulse" />
+              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-accent">System Status: Optimal // Core v4.2</span>
+            </motion.div>
+            
+            <h1 className="hero-title text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
+              ORCHESTRATE THE <br />
+              <span className="text-accent italic">INVISIBLE.</span>
             </h1>
-            <p className="text-xl text-gray-500 dark:text-gray-400 mb-10 max-w-2xl mx-auto font-medium leading-relaxed">
-              Connect your stack with self-healing, agentic workflows.
-              The most advanced automation engine ever built for enterprise.
+            
+            <p className="hero-title text-xl text-white/50 max-w-xl mb-12 font-medium leading-relaxed uppercase tracking-wider">
+              Connect your enterprise stack with self-healing, agentic architectures. 
+              The most advanced automation engine built for modern digital infrastructure.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button
-                onClick={handleGetStarted}
-                className="group px-10 py-5 bg-orange-500 text-white font-black rounded-2xl hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-[0_20px_40px_-10px_rgba(249,115,22,0.4)] hover:-translate-y-1"
-              >
-                Launch Builder
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button
-                className="px-10 py-5 bg-white dark:bg-[#0c0c0c] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-[#151515] transition-all"
-              >
-                View Live Demo
+            <div className="hero-title flex items-center gap-8">
+              <KineticButton primary onClick={() => navigate('/home')}>
+                Launch Architect <ArrowRight className="w-4 h-4" />
+              </KineticButton>
+              <button className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all group">
+                <div className="w-10 h-[1px] bg-white/20 group-hover:bg-accent transition-all group-hover:w-16" />
+                View Blueprint
               </button>
             </div>
-          </motion.div>
+          </div>
 
-          {/* New High-Fidelity Hero Mockup */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 1 }}
-            className="relative mx-auto mt-20 max-w-5xl group"
-          >
-            {/* Mockup Outer Shadow/Glow */}
-            <div className="absolute inset-0 bg-orange-500/20 dark:bg-orange-500/10 blur-[100px] -z-10 group-hover:bg-orange-500/30 transition-all duration-700" />
-
-            {/* The "Virtual Canvas" Mockup */}
-            <div className="bg-[#fcfdfe] dark:bg-[#080808] border-[1px] border-gray-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden aspect-[16/10] relative flex items-center justify-center p-4">
-
-              {/* Grid Background Overlay */}
-              <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.1]"
-                style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-
-              <div className="relative w-full h-full flex flex-col items-center pt-20 scale-75 sm:scale-90 md:scale-100 origin-top">
-
-                {/* 1. Trigger Node */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="relative z-10 w-52 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-xl flex items-center gap-4 transition-all"
+          <div className="flex-1 relative hero-mockup w-full">
+            {/* 3D Simulation Container */}
+            <div className="relative aspect-square w-full max-w-xl group">
+              {/* Animated Floating Nodes (SVG) */}
+              <div className="absolute inset-0 z-30 pointer-events-none overflow-visible">
+                {/* Node 1 */}
+                <motion.div 
+                  animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute top-1/4 -left-10 p-4 bg-surface-1/80 backdrop-blur-xl border border-accent/30 shadow-2xl"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/20">
-                    <Zap className="w-5 h-5 text-white" strokeWidth={3} />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">Trigger</p>
-                    <p className="text-sm font-black dark:text-white">API Webhook</p>
-                  </div>
+                  <Cpu className="w-5 h-5 text-accent" />
                 </motion.div>
-
-                {/* Connector Line 1 */}
-                <div className="w-[3px] h-16 bg-gray-100 dark:bg-white/5 relative">
-                  <motion.div
-                    animate={{ top: ['0%', '100%'], opacity: [0, 1, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    className="absolute left-[-2px] w-2 h-6 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full shadow-[0_0_15px_rgba(249,115,22,0.8)]" />
-                </div>
-
-                {/* 2. AI Logic Node */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="relative z-10 w-64 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-2 border-orange-500/20 dark:border-orange-500/10 p-4 rounded-2xl shadow-2xl flex items-center gap-4 transition-all"
+                {/* Node 2 */}
+                <motion.div 
+                  animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  className="absolute bottom-1/4 -right-10 p-4 bg-surface-1/80 backdrop-blur-xl border border-white/10 shadow-2xl"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/40">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">AI Agent</p>
-                    <p className="text-sm font-black dark:text-white">Process Logic v4.2</p>
-                  </div>
-                  <div className="ml-auto flex -space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-800 border-2 border-white dark:border-[#111]" />
-                    <div className="w-6 h-6 rounded-full bg-orange-500 border-2 border-white dark:border-[#111]" />
-                  </div>
+                  <Share2 className="w-5 h-5 text-white/40" />
                 </motion.div>
-
-                {/* Connector Line 2 */}
-                <div className="w-[3px] h-16 bg-gray-100 dark:bg-white/5" />
-
-                <div className="relative z-10 w-full flex justify-center gap-[20%] items-start">
-                  {/* Results Nodes */}
-                  <motion.div
-                    whileHover={{ y: -5 }}
-                    className="w-44 bg-white/50 dark:bg-[#111]/50 backdrop-blur-md border border-gray-100 dark:border-white/5 p-3 rounded-2xl shadow-lg flex items-center gap-3"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                      <Globe className="w-4 h-4 text-white" />
-                    </div>
-                    <p className="text-xs font-black dark:text-gray-300">Salesforce</p>
-                  </motion.div>
-
-                  <motion.div
-                    whileHover={{ y: -5 }}
-                    className="w-44 bg-white/50 dark:bg-[#111]/50 backdrop-blur-md border border-gray-100 dark:border-white/5 p-3 rounded-2xl shadow-lg flex items-center gap-3"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                      <Layers className="w-4 h-4 text-white" />
-                    </div>
-                    <p className="text-xs font-black dark:text-gray-300">Slack Pro</p>
-                  </motion.div>
-
-                  {/* SVG Paths for branches */}
-                  <svg className="w-full h-full absolute top-[-64px] inset-0" style={{ pointerEvents: 'none' }}>
-                    <path d="M 50% 16 L 50% 48 L 30% 64 L 30% 120" fill="none" className="stroke-gray-100 dark:stroke-white/5" strokeWidth="3" />
-                    <path d="M 50% 48 L 70% 64 L 70% 120" fill="none" className="stroke-gray-100 dark:stroke-white/5" strokeWidth="3" />
-                  </svg>
-                </div>
               </div>
 
-              {/* Status Indicator Mockup */}
-              <div className="absolute top-10 right-10 z-50 p-5 bg-white/95 dark:bg-[#111]/95 backdrop-blur-2xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] rounded-[2rem] border border-gray-100 dark:border-white/10 group-hover:scale-105 transition-transform">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
-                    <Check className="w-7 h-7 text-green-500" strokeWidth={4} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">NODE STATUS</p>
-                    <p className="text-base font-black dark:text-white leading-none">Live & Syncing</p>
-                  </div>
-                </div>
+              {/* Central Kinetic Simulation Asset */}
+              <div className="absolute inset-0 bg-accent/5 border border-white/10 p-4 rounded-[40px] transform rotate-3 group-hover:rotate-0 transition-all duration-700 overflow-hidden shadow-2xl">
+                 <SystemSimulation />
+                 {/* Glass overlay */}
+                 <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.02] to-transparent pointer-events-none" />
               </div>
 
+              {/* Orbiting Ring */}
+              <div className="absolute inset-0 border border-white/5 rounded-full scale-125 -z-10 animate-spin-slow opacity-20" />
             </div>
-          </motion.div>
+          </div>
+
         </div>
       </section>
 
-      {/* Trusted By */}
-      <section className="py-24 border-y border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/[0.02]">
-        <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] mb-16">
-            USED BY MODERN ENTERPRISES
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-x-20 gap-y-12 opacity-30 dark:opacity-20 grayscale group-hover:grayscale-0 transition-all duration-700">
-            {['TECHCORP', 'DATAFLOW', 'INNOVATE', 'GLOBALSYNC', 'MODERNA'].map(name => (
-              <span key={name} className="text-3xl font-black tracking-tighter dark:text-white transition-all hover:text-orange-500 cursor-default">{name}</span>
-            ))}
-          </div>
+      {/* --- STATS STRIP --- */}
+      <section className="border-y border-white/[0.03] py-20 px-8 bg-surface-1/30">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-12">
+          {[
+            { label: 'Network Uptime', value: '99.999%', unit: 'SLA' },
+            { label: 'Active Agents', value: '14.2', unit: 'MILLION' },
+            { label: 'Latency Rate', value: '< 12', unit: 'MS' },
+            { label: 'Security Tier', value: 'L-9', unit: 'QUANTUM' }
+          ].map((stat, i) => (
+            <div key={i} className="flex flex-col gap-2 text-center lg:text-left">
+              <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-white/30">{stat.label}</span>
+              <div className="flex items-baseline justify-center lg:justify-start gap-2">
+                <span className="text-4xl font-black tracking-tighter text-white">{stat.value}</span>
+                <span className="text-[10px] font-black text-accent">{stat.unit}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-32 px-6 relative">
-        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_50%,rgba(249,115,22,0.03)_0%,transparent_70%)]" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <h2 className="text-5xl md:text-6xl font-black text-gray-900 dark:text-white mb-8 tracking-tighter leading-none">
-              Power features for <br /> <span className="text-orange-500">elite</span> operations.
-            </h2>
-            <p className="text-lg text-gray-500 dark:text-gray-400 font-medium max-w-2xl mx-auto">
-              Built to handle millions of tasks with zero latency and complete predictability.
+      {/* --- FEATURES GRID --- */}
+      <section id="infrastructure" className="py-40 px-8 relative overflow-hidden">
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-accent/10 -z-10" />
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-end justify-between mb-24 gap-12">
+            <div className="max-w-2xl">
+              <span className="text-[10px] font-mono uppercase tracking-[0.5em] text-accent mb-6 block">Capabilities // 01</span>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-8">
+                ENGINEERED FOR <br /> <span className="text-accent italic text-7xl md:text-9xl">ABSOLUTE</span> SCALE.
+              </h2>
+            </div>
+            <p className="text-white/40 max-w-sm text-sm font-medium leading-relaxed uppercase tracking-widest">
+              Our infrastructure is built on the principle of self-healing autonomy.
+              Every node is a sovereign instrument of execution.
             </p>
           </div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-white/[0.05]">
             {features.map((feature, i) => {
-              const IconComp = {
-                Sparkles, MousePointer2, Shield, Cpu, BarChart, Globe
-              }[feature.icon] || Sparkles;
-
+              const icons = [Cpu, Shield, Zap, Layers, BarChart, Globe];
               return (
-                <motion.div
+                <IndustrialCard 
                   key={i}
-                  variants={itemVariants}
-                  className="group bg-white dark:bg-[#0c0c0c] border border-gray-100 dark:border-white/5 rounded-[2.5rem] p-10 hover:border-orange-500/50 transition-all hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] relative overflow-hidden"
-                >
-                  <div className="w-14 h-14 bg-orange-500/5 dark:bg-orange-500/10 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-orange-500 group-hover:text-white transition-all duration-500">
-                    <IconComp className="w-7 h-7 text-orange-500 group-hover:text-white" />
-                  </div>
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400 font-medium text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </motion.div>
+                  index={i}
+                  icon={icons[i % icons.length]}
+                  title={feature.title}
+                  description={feature.description}
+                />
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* --- KINETIC CTA --- */}
+      <section className="py-60 px-8 relative">
+        <div className="absolute inset-0 bg-accent/5 -z-10 skew-y-3" />
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="flex flex-col items-center gap-12"
+          >
+            <div className="w-20 h-20 bg-accent flex items-center justify-center mb-4">
+              <Terminal className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-6xl md:text-9xl font-black tracking-tighter leading-[0.8]">
+              READY TO <br /> <span className="text-accent underline decoration-4 underline-offset-8">ASCEND?</span>
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-6">
+              <KineticButton primary onClick={() => navigate('/signup')}>
+                Initialize Deployment
+              </KineticButton>
+              <button className="px-8 py-4 border border-white/10 font-bold uppercase tracking-widest text-[10px] hover:bg-white/5 transition-all">
+                Request System Access
+              </button>
+            </div>
+            <div className="font-mono text-[10px] text-white/20 mt-8 tracking-[0.5em] uppercase">
+              ORVEXIA GLOBAL // SECURITY CLEARANCE REQUIRED
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-32 px-6 bg-[#fafafa] dark:bg-[#070707]">
+      {/* --- FOOTER --- */}
+      <footer className="border-t border-white/[0.03] pt-40 pb-20 px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
-              Proof of <span className="text-orange-500">performance.</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white dark:bg-[#0d0d0d] border border-gray-200 dark:border-[#1a1a1a] rounded-[2rem] p-8 shadow-sm flex flex-col"
-              >
-                <div className="flex gap-1 mb-6">
-                  {[...Array(5)].map((_, idx) => (
-                    <Star key={idx} className="w-4 h-4 fill-orange-500 text-orange-500" />
-                  ))}
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 mb-8 font-medium italic leading-relaxed grow">
-                  "{t.content}"
-                </p>
-                <div className="flex items-center gap-4 pt-6 border-t border-gray-100 dark:border-[#1a1a1a]">
-                  <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100 dark:ring-[#1a1a1a]" />
-                  <div>
-                    <p className="font-bold text-gray-900 dark:text-white">{t.name}</p>
-                    <p className="text-[10px] text-orange-500 font-black uppercase tracking-widest">{t.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-32 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-20">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6 tracking-tighter leading-tight">
-              Simple, transparent <br /><span className="text-orange-500">enterprise</span> pricing.
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-end">
-            {pricingPlans.map((plan, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className={`flex flex-col bg-white dark:bg-[#0d0d0d] border ${plan.highlighted
-                  ? 'border-orange-500 shadow-2xl shadow-orange-500/10 ring-4 ring-orange-500/5 scale-105 z-10'
-                  : 'border-gray-200 dark:border-[#1a1a1a]'
-                  } rounded-[2.5rem] p-10 h-full`}
-              >
-                {plan.highlighted && (
-                  <div className="self-start px-3 py-1 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full mb-6">
-                    MOST POPULAR
-                  </div>
-                )}
-                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{plan.name}</h3>
-                <p className="text-gray-500 text-sm font-medium mb-8">{plan.description}</p>
-                <div className="mb-8">
-                  <span className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">{plan.price}</span>
-                  {plan.price !== 'Custom' && <span className="text-gray-400 font-bold ml-1">{plan.period}</span>}
-                </div>
-                <div className="space-y-4 mb-10 grow">
-                  {plan.features.map((f, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-orange-500" strokeWidth={4} />
-                      </div>
-                      <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={handleGetStarted}
-                  className={`w-full py-4 rounded-2xl font-black text-sm transition-all ${plan.highlighted
-                    ? 'bg-orange-500 text-white hover:bg-orange-600'
-                    : 'bg-gray-100 dark:bg-[#1a1a1a] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#222222]'
-                    }`}
-                >
-                  Get Started
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section - The "WOW" Redesign */}
-      <section className="py-40 px-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="max-w-6xl mx-auto p-12 md:p-28 text-center relative"
-        >
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[10px] font-black tracking-[0.3em] mb-10">
-              LIMITED ENTERPRISE SLOTS AVAILABLE
-            </div>
-            <h2 className="text-5xl md:text-8xl font-black text-gray-900 dark:text-white mb-12 tracking-tighter leading-[0.85]">
-              Ready to <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent italic">ascend?</span>
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <button
-                onClick={handleGetStarted}
-                className="px-14 py-7 bg-orange-500 text-white font-black text-xl rounded-2xl hover:bg-orange-600 transition-all shadow-xl hover:scale-105 active:scale-95"
-              >
-                Start Building Now
-              </button>
-              <button className="px-12 py-6 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white font-bold text-lg rounded-2xl hover:bg-gray-200 dark:hover:bg-white/10 transition-all">
-                Contact Sales
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-100 dark:border-white/5 pb-20 pt-32 px-6 bg-white dark:bg-[#030303]">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-x-12 gap-y-16 mb-24">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-20 mb-40">
             <div className="col-span-2">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center font-black text-white shadow-lg shadow-orange-500/20">V</div>
-                <span className="text-2xl font-black tracking-tighter dark:text-white">ORVEXIA</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium max-w-xs leading-relaxed">
-                The leading agentic AI platform for enterprise workflow automation.
+              <Logo />
+              <p className="mt-8 text-white/30 text-xs font-medium max-w-xs leading-relaxed uppercase tracking-wider">
+                The leading agentic AI platform for enterprise workflow automation. 
                 Designed for the next generation of global infrastructure.
               </p>
             </div>
             {[
-              { title: 'System', links: ['Workflows', 'AI Agents', 'Integrations', 'Security'] },
-              { title: 'Network', links: ['About', 'Careers', 'Ecosystem', 'News'] },
-              { title: 'Academy', links: ['Documentation', 'Guides', 'Templates', 'API'] },
-              { title: 'Entity', links: ['Privacy', 'Legal', 'Governance', 'Contact'] }
-            ].map(col => (
+              { title: 'Core', links: ['System', 'Nodes', 'Logic', 'Flow'] },
+              { title: 'Identity', links: ['About', 'Access', 'Security', 'Legal'] },
+              { title: 'Network', links: ['Twitter', 'GitHub', 'Discord', 'Status'] }
+            ].map((col) => (
               <div key={col.title}>
-                <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-gray-900 dark:text-white mb-8">{col.title}</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white mb-8">{col.title}</h4>
                 <ul className="space-y-4">
-                  {col.links.map(link => (
+                  {col.links.map((link) => (
                     <li key={link}>
-                      <a href="#" className="text-[11px] font-bold text-gray-400 hover:text-orange-500 transition-colors uppercase tracking-widest leading-none">
+                      <a href="#" className="text-[10px] font-bold text-white/30 hover:text-accent transition-colors uppercase tracking-widest">
                         {link}
                       </a>
                     </li>
@@ -453,16 +473,19 @@ export const Landing = () => {
               </div>
             ))}
           </div>
-          <div className="pt-12 border-t border-gray-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
-            <p className="text-[10px] font-black text-gray-400 dark:text-gray-600 tracking-[0.3em] uppercase">© 2026 ORVEXIA GLOBAL / LEVEL 9 AUTONOMY</p>
-            <div className="flex gap-10">
-              {['TWITTER', 'LINKEDIN', 'GITHUB', 'YOUTUBE'].map(s => (
-                <a key={s} href="#" className="text-[10px] font-black text-gray-400 hover:text-orange-500 transition-all tracking-[0.2em]">{s}</a>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 pt-12 border-t border-white/[0.03]">
+            <span className="text-[8px] font-mono tracking-[0.5em] text-white/20 uppercase">
+              © 2026 ORVEXIA GLOBAL // L-9 AUTHORIZED // NOISE_PROTOCOL_ENABLED
+            </span>
+            <div className="flex gap-12">
+              {['System Logs', 'API Docs', 'Governance'].map(link => (
+                <a key={link} href="#" className="text-[8px] font-bold uppercase tracking-[0.3em] text-white/20 hover:text-white transition-colors">{link}</a>
               ))}
             </div>
           </div>
         </div>
       </footer>
+
     </div>
   );
 };

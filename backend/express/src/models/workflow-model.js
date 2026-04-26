@@ -21,6 +21,13 @@ const WorkflowSchema = new mongoose.Schema({
   // Controls whether the workflow can be triggered
   is_active: { type: Boolean, default: false },
 
+  // Encrypted Environment Variables for integrations (API Keys, etc)
+  envVars: [{
+    key: String,
+    value: String, // Stored as AES-256 encrypted string
+    iv: String, // Initialization vector
+  }],
+
   // Quick stats for dashboard (Optional but helpful)
   stats: {
     total_runs: { type: Number, default: 0 },

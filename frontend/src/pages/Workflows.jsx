@@ -9,29 +9,98 @@ import {
   MoreVertical,
   Clock,
   Search,
+  Terminal,
+  Activity,
+  Cpu,
+  Layers,
+  Share2,
+  Box,
+  Settings
 } from "lucide-react";
 import { workflowApi } from "../lib/api";
 
-// Function to map workflow names to actual workflow images
-const getWorkflowImage = (name) => {
-  const n = name.toLowerCase();
-  if (n.includes("customer") && n.includes("onboarding")) {
-    return "https://www.moengage.com/wp-content/uploads/The-Customer-Onboarding-Process-832x479.webp";
-  }
-  if (n.includes("invoice")) {
-    return "https://dokka.com/wp-content/uploads/2022/11/Invoice-Processing-Workflow.jpg";
-  }
-  if (n.includes("email") && n.includes("campaign")) {
-    return "https://knowledge.hubspot.com/hubfs/marketing-automation-software-tools-5-20240814-2871568.webp";
-  }
-  if (n.includes("data") && n.includes("sync")) {
-    return "https://d2908q01vomqb2.cloudfront.net/e1822db470e60d090affd0956d743cb0e7cdf113/2023/04/19/DataSync-Pipeline-Trigger-Solution-Architecture.png";
-  }
-  if (n.includes("support") && n.includes("ticket")) {
-    return "https://doimages.nyc3.cdn.digitaloceanspaces.com/005SolutionsPages/Support%20ticket%20triage.jpg";
-  }
-  // Default fallback image
-  return "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop";
+const ArchitectureBlueprint = ({ workflow, index, onClick }) => {
+  const statusColors = {
+    active: 'text-accent-success bg-accent-success/5 border-accent-success/20',
+    paused: 'text-accent bg-accent/5 border-accent/20',
+    error: 'text-accent-danger bg-accent-danger/5 border-accent-danger/20',
+  };
+
+  const status = workflow.status || 'active';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      onClick={onClick}
+      className="group relative bg-surface-1 border border-white/[0.05] hover:border-accent/40 transition-all duration-500 cursor-pointer overflow-hidden"
+    >
+      {/* Blueprint Grid Background */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none surface-dot-grid" />
+      
+      {/* Schematic Visual */}
+      <div className="h-40 bg-surface-2 relative overflow-hidden flex items-center justify-center p-8 border-b border-white/[0.03]">
+        <div className="relative w-full h-full border border-white/[0.05] flex items-center justify-center">
+           {/* Abstract Node Structure SVG */}
+           <svg viewBox="0 0 200 100" className="w-full h-full text-white/5 transition-transform duration-700 group-hover:scale-110">
+              <path d="M40 50 L80 50 M120 50 L160 50" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+              <rect x="25" y="35" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1" />
+              <rect x="85" y="35" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1" />
+              <rect x="145" y="35" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1" />
+              {/* Active Pulse on line */}
+              <circle r="2" fill="#FF5F1F" className="animate-pulse">
+                <animateMotion dur="3s" repeatCount="indefinite" path="M40 50 L160 50" />
+              </circle>
+           </svg>
+        </div>
+        
+        {/* Status Tag */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+           <div className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border ${statusColors[status]}`}>
+             {status}
+           </div>
+        </div>
+        
+        {/* Version Tag */}
+        <div className="absolute top-4 right-4 text-[8px] font-mono text-white/10 uppercase tracking-widest">
+           v4.2.0_STABLE
+        </div>
+      </div>
+
+      {/* Blueprint Info */}
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 flex items-center justify-center bg-surface-2 border border-white/5 group-hover:border-accent/30 transition-all">
+             <Cpu className="w-4 h-4 text-white/40 group-hover:text-accent" />
+          </div>
+          <h3 className="text-sm font-black text-white group-hover:text-accent transition-colors uppercase tracking-widest truncate">
+            {workflow.name.toUpperCase()}
+          </h3>
+        </div>
+
+        <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest leading-relaxed line-clamp-2 mb-6">
+          {workflow.description}
+        </p>
+
+        {/* Telemetry Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.03]">
+          <div className="flex flex-col">
+             <span className="text-[8px] font-mono text-white/10 uppercase tracking-widest">Total_Ops</span>
+             <span className="text-[11px] font-black text-white/60 group-hover:text-white transition-colors">{workflow.executions || 0}</span>
+          </div>
+          <div className="flex flex-col items-end">
+             <span className="text-[8px] font-mono text-white/10 uppercase tracking-widest">Efficiency</span>
+             <span className="text-[11px] font-black text-accent-success">{workflow.successRate || 0}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Kinetic Accent */}
+      <div className="absolute bottom-0 left-0 w-full h-[1px] bg-white/[0.02]" />
+      <div className="absolute bottom-0 left-0 h-[1px] bg-accent w-0 group-hover:w-full transition-all duration-700" />
+    </motion.div>
+  );
 };
 
 export const Workflows = () => {
@@ -58,159 +127,92 @@ export const Workflows = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#111111]">
-        <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-obsidian text-white/20">
+        <div className="w-12 h-12 border border-accent/20 border-t-accent rounded-full animate-spin mb-4" />
+        <span className="text-[9px] font-mono uppercase tracking-[0.4em]">Syncing_Database...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#111111] p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Search Bar - Top Section */}
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search workflows..."
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 transition-all hover:border-orange-300 dark:hover:border-orange-700"
-          />
-        </div>
-
-        {/* Header - Compact */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-obsidian p-8 space-y-12">
+      <div className="max-w-[1600px] mx-auto space-y-12">
+        
+        {/* Header - Industrial Command Bar */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 relative z-10">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Workflows
+            <div className="flex items-center gap-3 mb-4">
+              <Terminal className="w-4 h-4 text-accent" />
+              <span className="text-[9px] font-mono text-white/20 uppercase tracking-[0.4em]">Architecture_Modules // Archive_01</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white">
+              SYSTEM <span className="text-accent italic">ARCHITECTURES</span>
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Automate your processes with ease.
-            </p>
           </div>
-          <button
-            onClick={() => navigate("/workflows/builder")}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#ff4f00] hover:bg-[#e64600] text-white text-xs font-bold rounded-full transition-all shadow-sm hover:scale-105 hover:shadow-md"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Create Workflow
-          </button>
+          
+          <div className="flex items-center gap-6">
+            <div className="relative group hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
+              <input
+                type="text"
+                placeholder="SEARCH_BLUEPRINTS..."
+                className="bg-surface-2 border border-white/5 pl-9 pr-4 py-2 w-64 text-[10px] font-mono text-white placeholder-white/10 focus:outline-none focus:border-accent/40 uppercase tracking-widest transition-all"
+              />
+            </div>
+            <button
+              onClick={() => navigate("/workflows/builder")}
+              className="flex items-center gap-2 px-6 py-2.5 bg-accent hover:bg-accent-dim text-white text-[10px] font-black uppercase tracking-widest transition-all"
+            >
+              <Plus className="w-4 h-4" /> New_Architecture
+            </button>
+          </div>
         </div>
 
-        {/* Stats - Small size */}
-        <div className="grid grid-cols-3 gap-4">
+        {/* Stats Summary Strip */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-l border-t border-white/[0.03] relative z-10">
           {[
-            { label: "Active Workflows", value: "3" },
-            { label: "Drafts", value: "0" },
-            { label: "Success Rate", value: "96.2%" },
+            { label: "Active_Architectures", value: workflows.length },
+            { label: "Draft_Modules", value: "00" },
+            { label: "Global_Efficiency", value: "96.2%" },
           ].map((stat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-3 shadow-sm hover:shadow-md hover:border-orange-300 dark:hover:border-orange-700 transition-all cursor-pointer"
-            >
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-tight">
+            <div key={idx} className="p-8 bg-surface-1 border-r border-b border-white/[0.03] group hover:bg-white/[0.01] transition-all cursor-pointer">
+              <p className="text-[9px] font-mono text-white/20 uppercase tracking-[0.4em] mb-4">
                 {stat.label}
               </p>
-              <p className="text-lg font-bold text-gray-800 dark:text-white">
-                {stat.value}
-              </p>
-            </motion.div>
+              <div className="flex items-baseline gap-3">
+                <p className="text-3xl font-black font-mono text-white tracking-tighter">
+                  {stat.value}
+                </p>
+                <div className="w-1.5 h-1.5 bg-accent/20" />
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Workflows Grid - 3 Columns with workflow images */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {workflows.map((workflow, idx) => {
-            const workflowImage = getWorkflowImage(workflow.name);
-            return (
-              <motion.div
-                key={workflow._id || workflow.id || idx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                onClick={() =>
-                  navigate(`/workflows/builder/${workflow._id || workflow.id}`)
-                }
-                className="group bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:border-orange-300 dark:hover:border-orange-700 transition-all cursor-pointer"
-              >
-                {/* Visual Header - Workflow Image */}
-                <div className="h-48 bg-gray-50 dark:bg-[#222222] relative overflow-hidden border-b border-gray-100 dark:border-[#2a2a2a]">
-                  <img
-                    src={workflowImage}
-                    alt={workflow.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://www.regpacks.com/wp-content/uploads/2021/05/Customer-Onboarding-Journey.png";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <button className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-sm rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-white dark:hover:bg-[#2a2a2a] transition-all opacity-0 group-hover:opacity-100">
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div
-                      className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                        workflow.status === "active"
-                          ? "bg-green-500/90 text-white"
-                          : workflow.status === "paused"
-                          ? "bg-yellow-500/90 text-white"
-                          : "bg-red-500/90 text-white"
-                      }`}
-                    >
-                      {workflow.status}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Body Section */}
-                <div className="p-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <div
-                      className={`w-2 h-2 rounded-full ${
-                        workflow.status === "active"
-                          ? "bg-green-500"
-                          : workflow.status === "paused"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                      }`}
-                    ></div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                      {workflow.status}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2 truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                    {workflow.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">
-                    {workflow.description}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-gray-800">
-                    <div>
-                      <p className="text-[9px] uppercase font-bold text-gray-400">
-                        Executions
-                      </p>
-                      <p className="text-sm font-bold text-gray-600 dark:text-gray-300">
-                        {workflow.executions || 0}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] uppercase font-bold text-gray-400">
-                        Success
-                      </p>
-                      <p className="text-sm font-bold text-green-600 dark:text-green-500">
-                        {workflow.successRate || 0}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+        {/* Architectures Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+          {workflows.map((workflow, idx) => (
+            <ArchitectureBlueprint 
+              key={workflow._id || workflow.id || idx}
+              workflow={workflow}
+              index={idx}
+              onClick={() => navigate(`/workflows/builder/${workflow._id || workflow.id}`)}
+            />
+          ))}
+          
+          {/* Empty Slot / Create New */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: workflows.length * 0.1 }}
+            onClick={() => navigate("/workflows/builder")}
+            className="group relative bg-surface-1 border border-white/[0.03] border-dashed flex flex-col items-center justify-center p-12 cursor-pointer hover:border-accent/40 transition-all duration-500"
+          >
+             <div className="w-12 h-12 flex items-center justify-center bg-surface-2 border border-white/5 group-hover:bg-accent/10 transition-all mb-4">
+                <Plus className="w-6 h-6 text-white/10 group-hover:text-accent" />
+             </div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-white">Initialize_New_Module</span>
+          </motion.div>
         </div>
       </div>
     </div>

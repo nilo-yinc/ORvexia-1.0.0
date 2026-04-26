@@ -35,3 +35,6 @@ frontend/gemini.md
 frontend/_tests_/
 backend/fastapi/README.md
 frontend/README.md
+
+# Stitch local metadata
+.stitch/

@@ -11,12 +11,12 @@ const ExecutionSchema = new mongoose.Schema({
   // Global Status
   status: {
     type: String,
-    enum: ["PENDING", "RUNNING", "COMPLETED", "FAILED"],
+    enum: ["PENDING", "RUNNING", "COMPLETED", "FAILED", "PAUSED"],
     default: "PENDING",
   },
 
-  // "The Bag" - Shared data context accessible by all nodes [cite: 81]
-  contextData: { type: mongoose.Schema.Types.Mixed, default: {} },
+  // LangGraph State Checkpoint (The "MemorySaver" state)
+  checkpoint: { type: mongoose.Schema.Types.Mixed, default: {} },
 
   // EMBEDDED STEPS (The "Lunchbox" Strategy) for high-speed reads [cite: 92]
   steps: [
@@ -27,12 +27,23 @@ const ExecutionSchema = new mongoose.Schema({
         type: String,
         enum: ["PENDING", "RUNNING", "SUCCESS", "FAILED"],
       },
-      input: Object,
-      output: Object, // Result from FastAPI
+      input: mongoose.Schema.Types.Mixed,
+      output: mongoose.Schema.Types.Mixed, // Result from API/AI
       error: String,
       startedAt: Date,
       completedAt: Date,
+      latencyMs: Number, // Performance metric
     },
+  ],
+
+  // Structured System Logs for Frontend Terminal Stream
+  logs: [
+    {
+      timestamp: { type: Date, default: Date.now },
+      level: { type: String, enum: ["INFO", "WARN", "ERROR", "DEBUG"], default: "INFO" },
+      message: String,
+      nodeId: String, // Optional relation to specific node
+    }
   ],
 
   startedAt: { type: Date, default: Date.now },

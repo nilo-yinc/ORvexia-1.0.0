@@ -16,9 +16,23 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      minlength: 6,
+      // Optional for SSO users
     },
+    githubId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    githubUsername: String,
+    githubAccessToken: String, // Store token for workflow automations
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    googleAccessToken: String, // Store token for workflow automations
+    googleRefreshToken: String,
+    avatar: String,
     role: {
       type: String,
       enum: ["user", "admin"],

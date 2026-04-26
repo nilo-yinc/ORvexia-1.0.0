@@ -108,5 +108,49 @@ const getWorkflowById = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+const { runLangGraphWorkflow } = require("../engine/langGraphOrchestrator");
+const Execution = require("../models/execution-model");
 
-module.exports = { createWorkflow, getworkflows, getWorkflowById };
+const executeWorkflow = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const workflow = await Workflow.findById(id);
+        if (!workflow || !workflow.active_version_id) {
+            return res.status(404).json({ error: "Workflow or active version not found" });
+        }
+
+        const activeVersion = await WorkflowVersion.findById(workflow.active_version_id);
+        const { nodes, edges } = activeVersion.definition;
+
+        // Create Execution Instance
+        const execution = await Execution.create({
+            workflow_id: workflow._id,
+            version_id: activeVersion._id,
+            status: "PENDING",
+            checkpoint: { contextData: req.body || {} },
+            logs: [],
+            steps: nodes.map(n => ({
+                nodeId: n.id,
+                label: n.data.label,
+                status: "PENDING"
+            }))
+        });
+
+        // Fire & Forget (run in background)
+        // Note: req.io comes from server.js middleware
+        runLangGraphWorkflow(nodes, edges, execution, req.io).catch(err => {
+            console.error("Background workflow execution failed:", err);
+        });
+
+        // Update stats
+        workflow.stats.total_runs += 1;
+        await workflow.save();
+
+        res.json({ success: true, executionId: execution._id, message: "Workflow triggered." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = { createWorkflow, getworkflows, getWorkflowById, executeWorkflow };

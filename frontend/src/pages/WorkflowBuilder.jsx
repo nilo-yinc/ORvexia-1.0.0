@@ -1,719 +1,124 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  BackgroundVariant,
-  MarkerType,
-  useReactFlow,
-  ReactFlowProvider,
+  MiniMap, Controls, Background, useNodesState, useEdgesState,
+  addEdge, BackgroundVariant, MarkerType, useReactFlow, ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
+import { gsap } from "gsap";
 import {
-  Play,
-  Save,
-  Download,
-  Upload,
-  Zap,
-  Globe,
-  FileText,
-  ArrowLeft,
-  Settings as SettingsIcon,
-  Undo2,
-  Redo2,
-  Search,
-  Plus,
-  X,
-  GitBranch,
-  Clock,
-  Code,
-  Filter,
-  Trash2,
-  Copy,
-  CheckCircle,
-  AlertCircle,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
-  ChevronUp,
-  Bot,
-  Send,
-  Sparkles,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Loader2,
-  Terminal,
-  Repeat,
-  Box,
-  Database,
-  FileCode,
-  User,
+  Play, Save, ArrowLeft, Settings as SettingsIcon, Undo2, Redo2,
+  Plus, X, Search, ZoomIn, ZoomOut, Maximize2, ChevronUp, Bot, Send,
+  Sparkles, PanelLeftClose, PanelLeftOpen, Loader2, Command,
+  Globe, Zap, GitBranch, Clock, Code, Repeat, Box, Database, FileCode,
+  Terminal, Shield, Activity, Cpu
 } from "lucide-react";
 import { io } from "socket.io-client";
-import { AppLogos } from "./AppLogos";
 import { workflowApi } from "../lib/api";
+import CustomNode from "../components/canvas/CustomNode";
+import CustomEdge from "../components/canvas/CustomEdge";
+import { ActivityPalette } from "../components/canvas/ActivityPalette";
+import { CommandKModal } from "../components/canvas/CommandKModal";
+import { LogStream } from "../components/canvas/LogStream";
+import { ConfigPanel } from "../components/canvas/ConfigPanel";
 
-// --- DATA: Block Categories ---
+// Block categories data
 const blockCategories = {
   Actions: [
-    {
-      name: "HTTP Request",
-      icon: Globe,
-      description: "Create and send an HTTP request",
-      color: "#ef4444",
-    },
-    {
-      name: "Flow Module",
-      icon: Box,
-      description: "Use another flow inside this flow",
-      color: "#8b5cf6",
-    },
-    {
-      name: "Database Query",
-      icon: Database,
-      description: "Query your database",
-      color: "#06b6d4",
-    },
+    { name: "HTTP Request", icon: Globe, description: "Send an HTTP request", color: "#FF5F1F" },
+    { name: "Flow Module", icon: Box, description: "Use another flow", color: "#FF5F1F" },
+    { name: "Database Query", icon: Database, description: "Query your database", color: "#FF5F1F" },
   ],
   Trigger: [
-    {
-      name: "Start",
-      icon: Zap,
-      description: "Start of the workflow",
-      color: "#10b981",
-    },
-    {
-      name: "Webhook",
-      icon: Zap,
-      description: "Trigger on webhook event",
-      color: "#f59e0b",
-    },
-    {
-      name: "Output",
-      icon: Zap,
-      description: "Output data from your flow",
-      color: "#14b8a6",
-    },
+    { name: "Start", icon: Zap, description: "Start of workflow", color: "#FF5F1F" },
+    { name: "Webhook", icon: Zap, description: "Trigger on webhook", color: "#FF5F1F" },
+    { name: "Output", icon: Zap, description: "Output data", color: "#FF5F1F" },
   ],
   AI: [
-    {
-      name: "AI Agent",
-      icon: Bot,
-      description: "Build agents that can autonomously complete complex tasks",
-      color: "#6366f1",
-    },
-    {
-      name: "Create with AI",
-      icon: Sparkles,
-      description:
-        "Use AI to write text, create images, transform data and more",
-      color: "#8b5cf6",
-    },
-    {
-      name: "AI Request",
-      icon: FileCode,
-      description: "Create and send an AI request",
-      color: "#ec4899",
-      badge: "BETA",
-    },
+    { name: "AI Agent", icon: Bot, description: "Autonomous AI agent", color: "#FF5F1F" },
+    { name: "Create with AI", icon: Sparkles, description: "AI text/image generation", color: "#FF5F1F" },
+    { name: "AI Request", icon: FileCode, description: "Send AI request", color: "#FF5F1F", badge: "BETA" },
   ],
   Logic: [
-    {
-      name: "Condition",
-      icon: GitBranch,
-      description:
-        "Use TypeScript or FQL to define expressions for branching data",
-      color: "#f59e0b",
-    },
-    {
-      name: "Validate",
-      icon: FileCode,
-      description: "Ensure your data matches a JSON schema",
-      color: "#06b6d4",
-    },
-    {
-      name: "If",
-      icon: GitBranch,
-      description: "Use TypeScript or FQL to branch data to true/false output",
-      color: "#f59e0b",
-    },
-    {
-      name: "Evaluate",
-      icon: Code,
-      description: "Transform and query data using TypeScript or FQL",
-      color: "#8b5cf6",
-    },
-    {
-      name: "Delay",
-      icon: Clock,
-      description: "Wait for a specified amount of time",
-      color: "#14b8a6",
-    },
-    {
-      name: "OR",
-      icon: GitBranch,
-      description:
-        "Outputs only the data from whichever input receives data first",
-      color: "#f59e0b",
-    },
+    { name: "Condition", icon: GitBranch, description: "Branch data", color: "#A1A1AA" },
+    { name: "If", icon: GitBranch, description: "True/false branch", color: "#A1A1AA" },
+    { name: "Evaluate", icon: Code, description: "Transform data", color: "#A1A1AA" },
+    { name: "Delay", icon: Clock, description: "Wait for time", color: "#A1A1AA" },
   ],
   Looping: [
-    {
-      name: "For Each",
-      icon: Repeat,
-      description: "Execute blocks for each item in a collection",
-      color: "#8b5cf6",
-    },
-    {
-      name: "While",
-      icon: Repeat,
-      description: "Execute blocks while condition is true",
-      color: "#8b5cf6",
-    },
+    { name: "For Each", icon: Repeat, description: "Loop over items", color: "#A1A1AA" },
+    { name: "While", icon: Repeat, description: "Loop while true", color: "#A1A1AA" },
   ],
   Apps: [
-    {
-      name: "Gmail",
-      logo: "gmail",
-      description: "Send and receive emails via Gmail",
-      color: "#EA4335",
-    },
-    {
-      name: "Google Drive",
-      logo: "drive",
-      description: "Access and manage files in Google Drive",
-      color: "#4285F4",
-    },
-    {
-      name: "Google Sheets",
-      logo: "sheets",
-      description: "Create and manage Google Sheets",
-      color: "#34A853",
-    },
-    {
-      name: "Google Calendar",
-      logo: "calendar",
-      description: "Manage events in Google Calendar",
-      color: "#4285F4",
-    },
-    {
-      name: "Slack",
-      logo: "slack",
-      description: "Send messages and notifications to Slack",
-      color: "#4A154B",
-    },
-    {
-      name: "Telegram",
-      logo: "telegram",
-      description: "Send messages via Telegram Bot API",
-      color: "#26A5E4",
-    },
-    {
-      name: "GitHub",
-      logo: "github",
-      description: "Interact with GitHub repositories and issues",
-      color: "#181717",
-    },
-    {
-      name: "Notion",
-      logo: "notion",
-      description: "Create and update Notion pages and databases",
-      color: "#000000",
-    },
-    {
-      name: "Discord",
-      logo: "discord",
-      description: "Send messages and manage Discord servers",
-      color: "#5865F2",
-    },
-    {
-      name: "Trello",
-      logo: "trello",
-      description: "Manage Trello boards, lists, and cards",
-      color: "#0079BF",
-    },
-    {
-      name: "Outlook",
-      logo: "outlook",
-      description: "Send emails and manage Outlook calendar",
-      color: "#0078D4",
-    },
-    {
-      name: "Excel",
-      logo: "excel",
-      description: "Create and update Excel spreadsheets",
-      color: "#217346",
-    },
-    {
-      name: "Stripe",
-      logo: "stripe",
-      description: "Accept payments and manage Stripe",
-      color: "#635BFF",
-    },
+    { name: "Gmail", logo: "gmail", description: "Send/receive emails", color: "#EA4335" },
+    { name: "Slack", logo: "slack", description: "Slack messages", color: "#4A154B" },
+    { name: "GitHub", logo: "github", description: "GitHub integration", color: "#181717" },
+    { name: "Notion", logo: "notion", description: "Notion pages", color: "#000000" },
+    { name: "Stripe", logo: "stripe", description: "Payments", color: "#635BFF" },
   ],
 };
 
-// --- INITIAL DATA ---
-const popularApps = [
-  {
-    name: "Microsoft Excel",
-    logo: "excel",
-    category: "apps",
-    triggers: ["New Row", "Updated Row"],
-    actions: ["Add Row", "Update Row", "Find Row"],
-  },
-  {
-    name: "Google Drive",
-    logo: "drive",
-    category: "apps",
-    triggers: ["New File", "New Folder"],
-    actions: ["Upload File", "Create Folder", "Move File"],
-  },
-  {
-    name: "Gmail",
-    logo: "gmail",
-    category: "apps",
-    triggers: ["New Email", "New Labeled Email"],
-    actions: ["Send Email", "Create Draft", "Add Label"],
-  },
-  {
-    name: "Notion",
-    logo: "notion",
-    category: "apps",
-    triggers: ["New Database Item", "Updated Page"],
-    actions: ["Create Page", "Update Database Item"],
-  },
-  {
-    name: "Telegram",
-    logo: "telegram",
-    category: "apps",
-    triggers: ["New Message", "New Channel Post"],
-    actions: ["Send Message", "Send Photo"],
-  },
-  {
-    name: "GitHub",
-    logo: "github",
-    category: "apps",
-    triggers: ["New Issue", "Push Event"],
-    actions: ["Create Issue", "Create PR"],
-  },
-  {
-    name: "Google Calendar",
-    logo: "calendar",
-    category: "apps",
-    triggers: ["Event Start", "New Event"],
-    actions: ["Create Event", "Update Event"],
-  },
-  {
-    name: "Google Sheets",
-    logo: "sheets",
-    category: "apps",
-    triggers: ["New Row", "Updated Row"],
-    actions: ["Create Row", "Update Row", "Clear Row"],
-  },
-  {
-    name: "Slack",
-    logo: "slack",
-    category: "apps",
-    triggers: ["New Message", "New Reaction"],
-    actions: ["Send Message", "Send Direct Message"],
-  },
-  {
-    name: "HubSpot",
-    logo: "hubspot",
-    category: "apps",
-    triggers: ["New Contact", "Updated Deal"],
-    actions: ["Create Contact", "Update Contact"],
-  },
-  {
-    name: "Google Forms",
-    logo: "googleforms",
-    category: "apps",
-    triggers: ["New Response"],
-    actions: ["Create Form"],
-  },
-  {
-    name: "Facebook Lead Ads",
-    logo: "facebook",
-    category: "apps",
-    triggers: ["New Lead"],
-    actions: [],
-  },
-  {
-    name: "Mailchimp",
-    logo: "mailchimp",
-    category: "apps",
-    triggers: ["New Subscriber", "Unsubscribe"],
-    actions: ["Add Subscriber", "Update Subscriber"],
-  },
-  {
-    name: "Microsoft Outlook",
-    logo: "outlook",
-    category: "apps",
-    triggers: ["New Email"],
-    actions: ["Send Email", "Create Event"],
-  },
-  {
-    name: "Trello",
-    logo: "trello",
-    category: "apps",
-    triggers: ["New Card", "Card Moved"],
-    actions: ["Create Card", "Update Card", "Move Card"],
-  },
-  {
-    name: "Stripe",
-    logo: "stripe",
-    category: "apps",
-    triggers: ["New Payment", "Failed Payment"],
-    actions: ["Create Customer", "Create Invoice"],
-  },
-  {
-    name: "Twitter",
-    logo: "twitter",
-    category: "apps",
-    triggers: ["New Tweet", "New Mention"],
-    actions: ["Post Tweet", "Like Tweet"],
-  },
-];
+const nodeTypes = { custom: CustomNode };
+const edgeTypes = { custom: CustomEdge };
 
-const builtInTools = [
-  {
-    name: "Webhooks",
-    icon: Zap,
-    category: "home",
-    triggers: ["Catch Hook"],
-    actions: ["POST Request", "GET Request"],
-  },
-  {
-    name: "Schedule",
-    icon: Clock,
-    category: "home",
-    triggers: ["Every Hour", "Every Day", "Custom"],
-    actions: [],
-  },
-  {
-    name: "Email",
-    icon: "📨",
-    category: "home",
-    triggers: ["New Email"],
-    actions: ["Send Email"],
-  },
-  {
-    name: "RSS",
-    icon: "📡",
-    category: "home",
-    triggers: ["New Item in Feed"],
-    actions: [],
-  },
-  {
-    name: "Code",
-    icon: Code,
-    category: "home",
-    triggers: [],
-    actions: ["Run JavaScript", "Run Python"],
-  },
-  {
-    name: "Email Parser",
-    icon: "📬",
-    category: "home",
-    triggers: ["New Email"],
-    actions: ["Parse Email"],
-  },
-  {
-    name: "Storage",
-    icon: "💾",
-    category: "home",
-    triggers: [],
-    actions: ["Store Value", "Get Value"],
-  },
-  {
-    name: "Formatter",
-    icon: "✨",
-    category: "utilities",
-    triggers: [],
-    actions: ["Format Text", "Format Date", "Format Number"],
-  },
-  {
-    name: "Filter",
-    icon: Filter,
-    category: "flow-controls",
-    triggers: [],
-    actions: ["Continue If", "Stop If"],
-  },
-  {
-    name: "Paths",
-    icon: GitBranch,
-    category: "flow-controls",
-    triggers: [],
-    actions: ["Split Path"],
-  },
-  {
-    name: "Delay",
-    icon: Clock,
-    category: "flow-controls",
-    triggers: [],
-    actions: ["Delay For", "Delay Until"],
-  },
-];
+const initialNodes = [{
+  id: "node_0", type: "custom",
+  data: { label: "Start", nodeType: "Trigger", category: "Trigger", description: "System entry point" },
+  position: { x: 400, y: 200 },
+}];
 
-const appCategories = [
-  { id: "home", label: "All Apps", icon: Zap },
-  { id: "apps", label: "Connected Apps", icon: Globe },
-  { id: "flow-controls", label: "Flow Controls", icon: Filter },
-];
-
-const nodeTypes = {};
-const edgeTypes = {};
-
-const initialNodes = [
-  {
-    id: "start",
-    type: "input",
-    data: { label: "Start", nodeType: "Trigger" },
-    position: { x: 400, y: 200 },
-    style: {
-      background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-      color: "white",
-      border: "none",
-      borderRadius: "12px",
-      padding: "16px 24px",
-      fontWeight: "600",
-      fontSize: "14px",
-      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)",
-      textAlign: "center",
-      minWidth: "150px",
-    },
-  },
-];
-
-const initialEdges = [];
-
-// --- HELPER: Node Styling ---
-const getNodeStyle = (type = "default") => ({
-  background:
-    type === "Trigger"
-      ? "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)"
-      : "#1f2937",
-  color: "#ffffff",
-  border: type === "Trigger" ? "none" : "1px solid #374151",
-  borderRadius: "12px",
-  padding: "16px 24px",
-  fontWeight: "600",
-  fontSize: "14px",
-  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)",
-  minWidth: "200px",
-  textAlign: "center",
-});
-
-// --- INNER CANVAS COMPONENT ---
-const WorkflowCanvasInner = ({
-  nodes,
-  edges,
-  onNodesChange,
-  onEdgesChange,
-  onConnect,
-  onNodeClick,
-  undo,
-  redo,
-  historyIndex,
-  history,
-  openBlockSelector,
-  showBlockSelector,
-  searchQuery,
-  setSearchQuery,
-  filteredBlocks,
-  addBlockFromSelector,
-  setShowBlockSelector,
-  onRun,
-}) => {
+// --- INNER CANVAS ---
+const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, undo, redo, historyIndex, history, onRun, setShowCmdK }) => {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
-
-  const handleZoomIn = () => zoomIn();
-  const handleZoomOut = () => zoomOut();
-  const handleFitView = () => fitView({ padding: 0.2 });
-
   return (
     <>
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        fitView
-        className="bg-[#0B0D14]"
+        nodes={nodes} edges={edges}
+        onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+        onConnect={onConnect} onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes} edgeTypes={edgeTypes}
+        fitView className="canvas-grid"
+        proOptions={{ hideAttribution: true }}
+        defaultEdgeOptions={{ type: 'custom', animated: false }}
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="#334155"
+        <Background variant={BackgroundVariant.Dots} gap={30} size={1} color="rgba(255,255,255,0.03)" />
+        <Controls 
+          showInteractive={false} 
+          className="!bg-surface-1 !border !border-white/[0.05] !p-1 !rounded-none" 
         />
-        <Controls
-          className="bg-[#1e293b] border-none fill-white text-white rounded-lg shadow-xl"
-          style={{ button: { backgroundColor: "#1e293b", fill: "white" } }}
-        />
-        <MiniMap
-          className="bg-[#1e293b] border-none rounded-lg shadow-xl"
-          nodeColor={(node) => node.style?.background || "#3b82f6"}
-          maskColor="rgba(0, 0, 0, 0.3)"
+        <MiniMap 
+          nodeColor={() => '#FF5F1F'} 
+          maskColor="rgba(9,9,11,0.8)" 
+          className="!bg-surface-1 !border !border-white/[0.05] !rounded-none"
+          pannable zoomable 
         />
       </ReactFlow>
 
-      {/* --- BLOCK SELECTOR POPUP --- */}
-      <AnimatePresence>
-        {showBlockSelector && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[400px] bg-[#111827] border border-[#374151] rounded-xl shadow-2xl overflow-hidden z-[100] flex flex-col max-h-[600px]"
-          >
-            {/* Search Bar */}
-            <div className="p-3 border-b border-[#374151]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for blocks or requests"
-                  autoFocus
-                  className="w-full pl-9 pr-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* List of Blocks */}
-            <div
-              className="flex-1 overflow-y-auto p-2 [&::-webkit-scrollbar]:hidden"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              {Object.entries(filteredBlocks).map(([category, blocks]) => (
-                <div key={category} className="mb-4">
-                  <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    {category}
-                  </div>
-                  {blocks.map((block, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => addBlockFromSelector(block)}
-                      className="w-full flex items-start gap-3 p-2 rounded-lg hover:bg-[#1f2937] transition text-left group"
-                    >
-                      {block.logo ? (
-                        <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-[#1f2937] border border-[#374151] group-hover:border-gray-500 transition">
-                          <AppLogos name={block.logo} className="w-5 h-5" />
-                        </div>
-                      ) : (
-                        <div
-                          className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: `${block.color}20` }}
-                        >
-                          <block.icon
-                            className="w-4 h-4"
-                            style={{ color: block.color }}
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-200 group-hover:text-white">
-                            {block.name}
-                          </span>
-                          {block.badge && (
-                            <span className="px-1.5 py-0.5 bg-blue-900/50 text-blue-300 text-[10px] font-bold rounded border border-blue-800">
-                              {block.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                          {block.description}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setShowBlockSelector(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* FIXED BOTTOM TOOLBAR */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transform translate-x-[-15%]">
-        <div className="bg-[#111827] border border-[#374151] rounded-xl shadow-2xl px-4 py-2 flex items-center gap-3">
-          <button
-            onClick={undo}
-            disabled={historyIndex === 0}
-            className="p-2 hover:bg-[#1f2937] rounded-lg disabled:opacity-30 transition text-gray-400 hover:text-white"
-            title="Undo"
-          >
-            <Undo2 className="w-4 h-4" />
+      {/* Bottom toolbar - Industrial Dock */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
+        <div className="flex items-center gap-1 p-1 bg-surface-1 border border-white/[0.05] shadow-2xl">
+          <button onClick={undo} disabled={historyIndex === 0} className="p-2.5 text-white/40 hover:text-white disabled:opacity-10 transition-colors" title="Undo">
+            <Undo2 className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={redo}
-            disabled={historyIndex === history.length - 1}
-            className="p-2 hover:bg-[#1f2937] rounded-lg disabled:opacity-30 transition text-gray-400 hover:text-white"
-            title="Redo"
-          >
-            <Redo2 className="w-4 h-4" />
+          <button onClick={redo} disabled={historyIndex === history.length - 1} className="p-2.5 text-white/40 hover:text-white disabled:opacity-10 transition-colors" title="Redo">
+            <Redo2 className="w-3.5 h-3.5" />
           </button>
-          <div className="w-px h-6 bg-[#374151]" />
-          <button
-            onClick={handleZoomOut}
-            className="p-2 hover:bg-[#1f2937] rounded-lg transition text-gray-400 hover:text-white"
-          >
-            <ZoomOut className="w-4 h-4" />
+          
+          <div className="w-[1px] h-4 bg-white/[0.05] mx-2" />
+          
+          <button onClick={() => zoomOut()} className="p-2.5 text-white/40 hover:text-white transition-colors"><ZoomOut className="w-3.5 h-3.5" /></button>
+          <button onClick={() => zoomIn()} className="p-2.5 text-white/40 hover:text-white transition-colors"><ZoomIn className="w-3.5 h-3.5" /></button>
+          <button onClick={() => fitView({ padding: 0.2 })} className="p-2.5 text-white/40 hover:text-white transition-colors"><Maximize2 className="w-3.5 h-3.5" /></button>
+          
+          <div className="w-[1px] h-4 bg-white/[0.05] mx-2" />
+          
+          <button onClick={() => setShowCmdK(true)} className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.03] text-[9px] font-black uppercase tracking-[0.2em] text-white/30 transition-all">
+            <Command className="w-3 h-3" /> COMMAND_SEARCH
           </button>
-          <button
-            onClick={handleZoomIn}
-            className="p-2 hover:bg-[#1f2937] rounded-lg transition text-gray-400 hover:text-white"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleFitView}
-            className="p-2 hover:bg-[#1f2937] rounded-lg transition text-gray-400 hover:text-white"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </button>
-          <div className="w-px h-6 bg-[#374151]" />
-
-          <button
-            onClick={() => {
-              setShowBlockSelector(!showBlockSelector);
-              setSearchQuery("");
-            }}
-            className={`flex items-center gap-2 px-4 py-2 hover:bg-[#374151] text-white text-sm font-medium rounded-lg transition border border-[#374151] ${showBlockSelector ? "bg-[#374151]" : "bg-[#1f2937]"
-              }`}
-          >
-            <Plus className="w-4 h-4" />
-            Block
-          </button>
-
-          <button
-            onClick={onRun}
-            className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold rounded-lg transition flex items-center gap-2 shadow-lg shadow-orange-900/20"
-          >
-            <Play className="w-4 h-4 fill-current" />
-            Run
-            <ChevronUp className="w-3 h-3" />
+          
+          <button onClick={onRun} className="flex items-center gap-2 px-6 py-2 bg-accent hover:bg-accent-dim text-white text-[10px] font-black uppercase tracking-widest transition-all ml-1">
+            <Play className="w-3 h-3 fill-current" /> Execute_Flow
           </button>
         </div>
       </div>
@@ -721,747 +126,209 @@ const WorkflowCanvasInner = ({
   );
 };
 
+// --- MAIN EXPORT ---
 export const WorkflowBuilder = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get ID from URL if present
+  const { id } = useParams();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [workflowName, setWorkflowName] = useState("New flow module");
-
-  // States
-  const [showBlockSelector, setShowBlockSelector] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('home');
-  const [history, setHistory] = useState([{ nodes: initialNodes, edges: initialEdges }]);
+  const [workflowName, setWorkflowName] = useState("NEW_ARCHITECTURE_MODULE");
+  const [showPalette, setShowPalette] = useState(true);
+  const [showCmdK, setShowCmdK] = useState(false);
+  const [paletteSearch, setPaletteSearch] = useState('');
+  const [history, setHistory] = useState([{ nodes: initialNodes, edges: [] }]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [nodeIdCounter, setNodeIdCounter] = useState(1);
-  const [currentNodeForApp, setCurrentNodeForApp] = useState(null);
   const [triggerSlug, setTriggerSlug] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // AI Copilot States
+  const [logs, setLogs] = useState([]);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      role: "ai",
-      text: "Hi! I can help you build this workflow. What would you like to do?",
-    },
-  ]);
+  const [messages, setMessages] = useState([{ id: 1, role: "ai", text: "SYSTEM_READY: I am your architectural copilot. Describe the logic you wish to implement." }]);
   const [chatInput, setChatInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatEndRef = useRef(null);
+  const mainRef = useRef(null);
 
-  // Connection State
-  const [connectingFrom, setConnectingFrom] = useState(null);
-
-  // Load workflow if ID is present
+  // Load workflow
   useEffect(() => {
     if (id) {
-      const loadWorkflow = async () => {
-        setIsLoading(true);
-        try {
-          const data = await workflowApi.getById(id);
-          if (data) {
-            setWorkflowName(data.name);
-            setTriggerSlug(data.triggerSlug);
-            if (data.nodes) setNodes(data.nodes);
-            if (data.edges) setEdges(data.edges);
-          }
-        } catch (error) {
-          console.error("Failed to load workflow", error);
-        } finally {
-          setIsLoading(false);
+      setIsLoading(true);
+      workflowApi.getById(id).then((data) => {
+        if (data) {
+          setWorkflowName(data.name.toUpperCase());
+          setTriggerSlug(data.triggerSlug);
+          if (data.nodes) setNodes(data.nodes);
+          if (data.edges) setEdges(data.edges);
         }
-      };
-      loadWorkflow();
+      }).catch(console.error).finally(() => setIsLoading(false));
     }
   }, [id, setNodes, setEdges]);
+
+  // Socket for live updates
+  useEffect(() => {
+    const socket = io(import.meta.env.VITE_SOCKET_URL || 'https://orvexia-backend.vercel.app');
+    socket.on('workflow_update', (data) => {
+      setNodes((nds) => nds.map((n) => n.id === data.nodeId ? { ...n, data: { ...n.data, status: data.status.toLowerCase() } } : n));
+      setEdges((eds) => eds.map((e) => e.source === data.nodeId ? { ...e, data: { ...e.data, active: data.status === 'RUNNING' } } : e));
+      const ts = new Date().toISOString().split('T')[1].split('.')[0];
+      setLogs((prev) => [...prev, {
+        id: Date.now(), timestamp: ts,
+        severity: data.status === 'SUCCESS' ? 'success' : data.status === 'FAILED' ? 'error' : 'info',
+        node: data.nodeId, message: `NODE_${data.nodeId.toUpperCase()} → ${data.status}`,
+      }]);
+    });
+    return () => socket.disconnect();
+  }, [setNodes, setEdges]);
+
+  const saveHistory = (n, e) => {
+    const h = history.slice(0, historyIndex + 1);
+    h.push({ nodes: n, edges: e });
+    setHistory(h);
+    setHistoryIndex(h.length - 1);
+  };
+
+  const undo = () => { if (historyIndex > 0) { setHistoryIndex(historyIndex - 1); setNodes(history[historyIndex - 1].nodes); setEdges(history[historyIndex - 1].edges); } };
+  const redo = () => { if (historyIndex < history.length - 1) { setHistoryIndex(historyIndex + 1); setNodes(history[historyIndex + 1].nodes); setEdges(history[historyIndex + 1].edges); } };
+
+  const onConnect = useCallback((params) => {
+    const ne = addEdge({ ...params, type: 'custom', data: { active: false }, markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.1)' } }, edges);
+    setEdges(ne);
+    saveHistory(nodes, ne);
+  }, [edges, nodes]);
+
+  const onNodeClick = useCallback((_, node) => setSelectedNode(node), []);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const payload = {
-        name: workflowName,
-        nodes,
-        edges,
-        triggerSlug: triggerSlug, // Pass slug if we have it (for updates)
-      };
-      const result = await workflowApi.create(payload);
-      if (result && result.triggerSlug) {
-        setTriggerSlug(result.triggerSlug);
-
-        // If we just created a new workflow, switch the URL to the edit URL
-        if (!id && result.workflowId) {
-          navigate(`/workflows/builder/${result.workflowId}`, {
-            replace: true,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Failed to save workflow", error);
-    } finally {
-      setIsSaving(false);
-    }
+      const result = await workflowApi.create({ name: workflowName, nodes, edges, triggerSlug });
+      if (result?.triggerSlug) { setTriggerSlug(result.triggerSlug); if (!id && result.workflowId) navigate(`/workflows/builder/${result.workflowId}`, { replace: true }); }
+    } catch (e) { console.error(e); } finally { setIsSaving(false); }
   };
 
   const handleRun = async () => {
-    if (!triggerSlug) {
-      alert("Please save the workflow first to generate a trigger slug.");
-      return;
-    }
-    try {
-      await fetch(`/api/webhook/${triggerSlug}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: true })
-      });
-    } catch (e) {
-      console.error("Run failed", e);
-    }
+    if (!triggerSlug) { alert("SAVE_PROTOCOL_REQUIRED: Save workflow to execute."); return; }
+    setLogs((prev) => [...prev, { id: Date.now(), timestamp: new Date().toISOString().split('T')[1].split('.')[0], severity: 'info', node: 'SYS', message: 'EXECUTION_INITIATED...' }]);
+    try { await fetch(`/api/webhook/${triggerSlug}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true }) }); } catch (e) { console.error(e); }
   };
 
-  useEffect(() => {
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'https://orvexia-backend.vercel.app');
-
-    socket.on('connect', () => {
-      console.log('Connected to socket server');
-    });
-
-    socket.on('workflow_update', (data) => {
-      setNodes((nds) =>
-        nds.map((node) => {
-          if (node.id === data.nodeId) {
-            let newStyle = { ...node.style };
-            if (data.status === 'RUNNING') {
-              newStyle.border = '2px solid #fbbf24';
-              newStyle.boxShadow = '0 0 15px rgba(251, 191, 36, 0.6)';
-              newStyle.transition = 'all 0.3s ease';
-            } else if (data.status === 'SUCCESS') {
-              newStyle.border = '2px solid #10b981';
-              newStyle.boxShadow = '0 0 15px rgba(16, 185, 129, 0.6)';
-              newStyle.transition = 'all 0.3s ease';
-            } else if (data.status === 'FAILED') {
-              newStyle.border = '2px solid #ef4444';
-              newStyle.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
-              newStyle.transition = 'all 0.3s ease';
-            }
-            return { ...node, style: newStyle };
-          }
-          return node;
-        })
-      );
-    });
-
-    return () => {
-      socket.disconnect();
+  const addBlock = (block, category) => {
+    const isTrigger = block.name === "Start" || block.name === "Webhook";
+    const newNode = {
+      id: `node_${nodeIdCounter}`, type: 'custom',
+      data: { label: block.name, nodeType: isTrigger ? "Trigger" : "Action", category, description: block.description, app: block.logo ? block.name : undefined, icon: block.logo, color: block.color, badge: block.badge },
+      position: { x: Math.random() * 300 + 200, y: Math.random() * 300 + 100 },
     };
-  }, [setNodes]);
+    setNodeIdCounter((c) => c + 1);
+    const nn = [...nodes, newNode];
+    setNodes(nn);
+    saveHistory(nn, edges);
+  };
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      }
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "y" || (e.key === "z" && e.shiftKey))
-      ) {
-        e.preventDefault();
-        redo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        handleSave();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [historyIndex, history, nodes, edges, workflowName, triggerSlug]);
+  const updateNode = (nodeId, newData) => { setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: newData } : n)); };
+  const deleteNode = (nodeId) => { const nn = nodes.filter((n) => n.id !== nodeId); const ne = edges.filter((e) => e.source !== nodeId && e.target !== nodeId); setNodes(nn); setEdges(ne); setSelectedNode(null); saveHistory(nn, ne); };
+  const duplicateNode = (node) => { const nn = { ...node, id: `node_${nodeIdCounter}`, position: { x: node.position.x + 60, y: node.position.y + 60 } }; setNodeIdCounter((c) => c + 1); const newNodes = [...nodes, nn]; setNodes(newNodes); saveHistory(newNodes, edges); };
 
-  // AI Copilot Handlers
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-
-    const userMsg = { id: Date.now(), role: "user", text: chatInput };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { id: Date.now(), role: "user", text: chatInput }]);
     setChatInput("");
     setIsAiTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMsg = {
-        id: Date.now() + 1,
-        role: "ai",
-        text: `I understand you want to "${userMsg.text}". I can help configure the nodes for that.`,
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsAiTyping(false);
-    }, 1500);
+    setTimeout(() => { setMessages((prev) => [...prev, { id: Date.now(), role: "ai", text: `PROTOCOL_UPDATE: Configuring logic for "${chatInput.toUpperCase()}"` }]); setIsAiTyping(false); }, 1500);
   };
 
-  const handleQuickAction = (action) => {
-    setChatInput(action);
-    // Optionally auto-submit:
-    // handleSendMessage({ preventDefault: () => {} });
-  };
-
-  // Auto-scroll chat
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isAiTyping]);
-
-  const onConnect = useCallback(
-    (params) => {
-      const newEdges = addEdge(
-        {
-          ...params,
-          animated: true,
-          type: "smoothstep",
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
-          style: { stroke: "#64748b", strokeWidth: 2 },
-        },
-        edges
-      );
-      setEdges(newEdges);
-      saveHistory(nodes, newEdges);
-    },
-    [edges, nodes]
-  );
-
-  const saveHistory = (newNodes, newEdges) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push({ nodes: newNodes, edges: newEdges });
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const undo = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1);
-      setNodes(history[historyIndex - 1].nodes);
-      setEdges(history[historyIndex - 1].edges);
-    }
-  };
-
-  const redo = () => {
-    if (historyIndex < history.length - 1) {
-      setHistoryIndex(historyIndex + 1);
-      setNodes(history[historyIndex + 1].nodes);
-      setEdges(history[historyIndex + 1].edges);
-    }
-  };
-
-  // --- Filtering Logic for Block Selector ---
-  const filteredBlocks = Object.entries(blockCategories).reduce(
-    (acc, [category, blocks]) => {
-      const filtered = blocks.filter(
-        (block) =>
-          searchQuery === "" ||
-          block.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      if (filtered.length > 0) {
-        acc[category] = filtered;
-      }
-      return acc;
-    },
-    {}
-  );
-
-  const addBlockFromSelector = (block) => {
-    let nodeType = "default";
-    let nodeData = {
-      label: block.name,
-      nodeType: block.name,
-      description: block.description,
-      app: block.logo ? block.name : undefined,
-      icon: block.logo || undefined,
-    };
-
-    // Styling logic
-    const nodeStyle = getNodeStyle("Action");
-
-    if (block.name === "Start" || block.name === "Webhook") {
-      nodeType = "input";
-      nodeData.nodeType = "Trigger";
-      Object.assign(nodeStyle, getNodeStyle("Trigger"));
-    }
-
-    const newNode = {
-      id: `node_${nodeIdCounter}`,
-      type: nodeType,
-      data: nodeData,
-      position: { x: Math.random() * 300 + 200, y: Math.random() * 300 + 100 },
-      style: nodeStyle,
-    };
-
-    setNodeIdCounter(nodeIdCounter + 1);
-    const newNodes = [...nodes, newNode];
-    setNodes(newNodes);
-
-    if (connectingFrom) {
-      const newEdge = {
-        id: `edge_${connectingFrom}_${newNode.id}`,
-        source: connectingFrom,
-        target: newNode.id,
-        animated: true,
-        type: "smoothstep",
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
-        style: { stroke: "#64748b", strokeWidth: 2 },
-      };
-      const newEdges = [...edges, newEdge];
-      setEdges(newEdges);
-      saveHistory(newNodes, newEdges);
-      setConnectingFrom(null);
-    } else {
-      saveHistory(newNodes, edges);
-    }
-
-    setShowBlockSelector(false);
-    setSearchQuery("");
-  };
-
-  const deleteNode = (nodeId) => {
-    const newNodes = nodes.filter((n) => n.id !== nodeId);
-    const newEdges = edges.filter(
-      (e) => e.source !== nodeId && e.target !== nodeId
-    );
-    setNodes(newNodes);
-    setEdges(newEdges);
-    setSelectedNode(null);
-  };
-
-  const duplicateNode = (node) => {
-    const newNode = {
-      ...node,
-      id: `node_${nodeIdCounter}`,
-      position: { x: node.position.x + 50, y: node.position.y + 50 },
-    };
-    setNodeIdCounter(nodeIdCounter + 1);
-    const newNodes = [...nodes, newNode];
-    setNodes(newNodes);
-    saveHistory(newNodes, edges);
-  };
-
-  const onNodeClick = useCallback((event, node) => setSelectedNode(node), []);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isAiTyping]);
 
   return (
-    <div className="h-screen flex flex-col bg-[#0B0D14] overflow-hidden text-gray-100 font-sans">
-      {/* Header */}
-      <div className="h-14 bg-[#111827] border-b border-[#1f2937] flex items-center justify-between px-4 flex-shrink-0 z-20">
+    <div className="h-screen flex flex-col bg-obsidian overflow-hidden text-white font-sans">
+      {/* Header - Industrial Command Bar */}
+      <div className="h-14 flex items-center justify-between px-6 shrink-0 z-30 bg-surface-1 border-b border-white/[0.05]">
+        <div className="flex items-center gap-6">
+          <button onClick={() => navigate("/workflows")} className="flex items-center gap-2 text-white/20 hover:text-white transition text-[10px] font-black uppercase tracking-[0.2em]">
+            <ArrowLeft className="w-3.5 h-3.5" /> ESC_BACK
+          </button>
+          <div className="h-4 w-[1px] bg-white/[0.05]" />
+          <div className="flex items-center gap-3">
+            <Terminal className="w-4 h-4 text-accent" />
+            <input 
+              type="text" 
+              value={workflowName} 
+              onChange={(e) => setWorkflowName(e.target.value.toUpperCase())} 
+              className="bg-transparent border-none text-[12px] font-black tracking-widest text-white/80 focus:outline-none focus:text-white w-64 uppercase" 
+            />
+          </div>
+        </div>
+        
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/workflows")}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition text-sm font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
+          <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-surface-2 border border-white/5 text-[10px] font-black uppercase tracking-widest hover:border-accent/40 transition-all">
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            {isSaving ? "Saving..." : "Commit_Changes"}
           </button>
-          <div className="h-6 w-px bg-[#374151]" />
-          <input
-            type="text"
-            value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
-            className="bg-transparent border-none text-sm font-medium text-white focus:ring-0 p-0 w-64 placeholder-gray-500"
-          />
-        </div>
-
-        {/* Right side simple actions */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="text-sm font-medium text-gray-400 hover:text-white transition flex items-center gap-2"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save
-              </>
-            )}
-          </button>
-          <button className="p-2 hover:bg-[#1f2937] rounded-full transition text-gray-400">
-            <SettingsIcon className="w-5 h-5" />
+          <button onClick={() => setIsCopilotOpen(!isCopilotOpen)} className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all border ${isCopilotOpen ? "bg-accent/10 border-accent/40 text-accent" : "bg-surface-2 border-white/5 text-white/40"}`}>
+            <Sparkles className="w-3.5 h-3.5" /> AI_Architect
           </button>
         </div>
-        <button
-          onClick={() => setIsCopilotOpen(!isCopilotOpen)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition border ${isCopilotOpen
-              ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300"
-              : "bg-[#1f2937] border-[#374151] text-gray-400"
-            }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          {isCopilotOpen ? "Copilot Active" : "Enable Copilot"}
-        </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* --- AI COPILOT SIDEBAR --- */}
-        <AnimatePresence mode="wait">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Activity Palette */}
+        <ActivityPalette isOpen={showPalette} onClose={() => setShowPalette(false)} blockCategories={blockCategories} onAddBlock={addBlock} searchQuery={paletteSearch} setSearchQuery={setPaletteSearch} />
+
+        {/* AI Copilot Sidebar */}
+        <AnimatePresence>
           {isCopilotOpen && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 340, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              className="bg-[#111827] border-r border-[#1f2937] flex flex-col z-10"
-            >
-              <div className="p-4 border-b border-[#1f2937] flex items-center justify-between bg-[#111827]">
-                <div className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-indigo-400" />
-                  <h3 className="font-semibold text-white">AI Builder</h3>
-                </div>
-                <button
-                  onClick={() => setIsCopilotOpen(false)}
-                  className="text-gray-500 hover:text-white"
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </button>
+            <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="flex flex-col bg-surface-1 border-r border-white/[0.05] z-20 overflow-hidden">
+              <div className="px-6 py-4 border-b border-white/[0.05] flex items-center justify-between">
+                <div className="flex items-center gap-3"><Bot className="w-4 h-4 text-accent" /><span className="text-[10px] font-black uppercase tracking-widest text-white/70">Agentic_Builder</span></div>
+                <button onClick={() => setIsCopilotOpen(false)} className="text-white/20 hover:text-white"><PanelLeftClose className="w-4 h-4" /></button>
               </div>
-              <div
-                className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0B0D14] [&::-webkit-scrollbar]:hidden"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-0">
                 {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""
-                      }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === "ai" ? "bg-indigo-600" : "bg-gray-700"
-                        }`}
-                    >
-                      {msg.role === "ai" ? (
-                        <Bot className="w-4 h-4 text-white" />
-                      ) : (
-                        <div className="text-xs font-bold text-white">U</div>
-                      )}
-                    </div>
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${msg.role === "ai"
-                          ? "bg-[#1f2937] text-gray-200 rounded-tl-none"
-                          : "bg-indigo-600 text-white rounded-tr-none"
-                        }`}
-                    >
+                  <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                    <div className={`text-[8px] font-mono mb-1 uppercase tracking-widest text-white/20`}>{msg.role === "ai" ? "AGENT_ORVEXIA" : "ARCHITECT_ADMIN"}</div>
+                    <div className={`max-w-[90%] p-4 text-[11px] leading-relaxed font-medium ${msg.role === "ai" ? "bg-white/[0.02] border border-white/[0.05] text-white/60" : "bg-accent/10 border border-accent/20 text-white/90"}`}>
                       {msg.text}
                     </div>
                   </div>
                 ))}
-                {isAiTyping && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="bg-[#1f2937] px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1">
-                      <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-                      <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
-                      <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
-                    </div>
-                  </div>
-                )}
+                {isAiTyping && (<div className="flex flex-col items-start"><div className="text-[8px] font-mono mb-1 text-white/20">AGENT_SYNCING...</div><div className="bg-white/[0.02] p-4 flex gap-1"><span className="w-1 h-1 bg-accent rounded-full animate-pulse" /><span className="w-1 h-1 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.1s' }} /><span className="w-1 h-1 bg-accent rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} /></div></div>)}
                 <div ref={chatEndRef} />
               </div>
-
-              {/* Quick Actions Chips (RESTORED) */}
-              <div
-                className="px-4 py-2 flex gap-2 overflow-x-auto border-t border-[#1f2937] bg-[#111827] [&::-webkit-scrollbar]:hidden"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {[
-                  "Connect GitHub",
-                  "Send Email",
-                  "Add Slack",
-                  "Create Notion Page",
-                ].map((action) => (
-                  <button
-                    key={action}
-                    onClick={() => handleQuickAction(action)}
-                    className="whitespace-nowrap px-3 py-1 bg-[#1f2937] hover:bg-[#374151] border border-[#374151] rounded-full text-xs text-gray-300 transition"
-                  >
-                    {action}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-4 bg-[#111827] border-t border-[#1f2937]">
+              <div className="p-4 border-t border-white/[0.05]">
                 <form onSubmit={handleSendMessage} className="relative">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Describe what to build..."
-                    className="w-full bg-[#1f2937] border border-[#374151] text-white rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
+                  <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="ENTER_LOGIC_DESCRIPTION..." className="w-full bg-surface-2 border border-white/5 p-4 text-[10px] text-white placeholder-white/20 uppercase tracking-widest focus:outline-none focus:border-accent/40" />
+                  <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-accent hover:bg-accent-dim transition"><Send className="w-3.5 h-3.5 text-white" /></button>
                 </form>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* --- CANVAS --- */}
-        <div className="flex-1 relative">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-            </div>
-          ) : (
-            <>
-              {" "}
-              {!isCopilotOpen && (
-                <button
-                  onClick={() => setIsCopilotOpen(true)}
-                  className="absolute top-4 left-4 z-10 p-2 bg-[#1f2937] border border-[#374151] rounded-lg text-gray-400 hover:text-white shadow-lg"
-                >
-                  <PanelLeftOpen className="w-5 h-5" />
-                </button>
-              )}
+        {/* Main Canvas Area */}
+        <div className="flex-1 flex flex-col relative">
+          <div className="flex-1 relative">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-white/20">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                <span className="text-[10px] font-black uppercase tracking-[0.5em]">Syncing_Architecture...</span>
+              </div>
+            ) : (
               <ReactFlowProvider>
-                <WorkflowCanvasInner
-                  nodes={nodes}
-                  edges={edges}
-                  onNodesChange={onNodesChange}
-                  onEdgesChange={onEdgesChange}
-                  onConnect={onConnect}
-                  onNodeClick={onNodeClick}
-                  undo={undo}
-                  redo={redo}
-                  historyIndex={historyIndex}
-                  history={history}
-                  openBlockSelector={() => setShowBlockSelector(true)}
-                  showBlockSelector={showBlockSelector}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  filteredBlocks={filteredBlocks}
-                  addBlockFromSelector={addBlockFromSelector}
-                  setShowBlockSelector={setShowBlockSelector}
-                  onRun={handleRun}
-                />
+                <CanvasInner nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={onNodeClick} undo={undo} redo={redo} historyIndex={historyIndex} history={history} onRun={handleRun} setShowCmdK={setShowCmdK} />
               </ReactFlowProvider>
-            </>
-          )}
+            )}
+          </div>
+          <LogStream logs={logs} onClear={() => setLogs([])} />
         </div>
 
-        {/* --- RIGHT SIDEBAR: NODE SETTINGS --- */}
-        <AnimatePresence>
-          {selectedNode && (
-            <motion.div
-              initial={{ x: 320 }}
-              animate={{ x: 0 }}
-              exit={{ x: 320 }}
-              className="w-96 bg-[#111827] border-l border-[#1f2937] flex flex-col flex-shrink-0 z-20 shadow-2xl"
-            >
-              <div className="p-5 border-b border-[#1f2937] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-orange-600 rounded-md">
-                    <SettingsIcon className="w-4 h-4 text-white" />
-                  </div>
-                  <h3 className="text-base font-bold text-white">
-                    Node Settings
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedNode(null)}
-                  className="text-gray-500 hover:text-white transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div
-                className="p-5 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {/* 1. Basic Info */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                    Node Name
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedNode.data.label}
-                    onChange={(e) => {
-                      const updated = nodes.map((n) =>
-                        n.id === selectedNode.id
-                          ? { ...n, data: { ...n.data, label: e.target.value } }
-                          : n
-                      );
-                      setNodes(updated);
-                    }}
-                    className="w-full px-3 py-2.5 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
-                  />
-                </div>
-
-                {/* 2. Connected App Display */}
-                {selectedNode.data.app && (
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      Connected App
-                    </label>
-                    <div className="p-4 bg-[#1f2937] border border-[#374151] rounded-xl flex items-center gap-4">
-                      <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[#111827] rounded-lg border border-[#374151]">
-                        {selectedNode.data.icon ? (
-                          <AppLogos
-                            name={selectedNode.data.icon}
-                            className="w-6 h-6"
-                          />
-                        ) : (
-                          <Zap className="w-6 h-6 text-white" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-white">
-                          {selectedNode.data.app}
-                        </div>
-                        <div className="text-xs text-green-400 mt-0.5 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" /> Connected
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. DYNAMIC CONFIGURATION FORM */}
-                {selectedNode.data.app && (
-                  <div className="pt-2 border-t border-[#374151] mt-2">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 mt-4">
-                      Configuration
-                    </h4>
-                    <div className="mb-4">
-                      <label className="block text-xs text-gray-400 mb-1.5">
-                        Select Account
-                      </label>
-                      <div className="flex items-center justify-between px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center">
-                            <User className="w-3 h-3 text-gray-400" />
-                          </div>
-                          <span className="text-sm text-white">
-                            Admin Account
-                          </span>
-                        </div>
-                        <ChevronUp className="w-4 h-4 text-gray-500 rotate-180" />
-                      </div>
-                    </div>
-                    {selectedNode.data.app.toLowerCase().includes("mail") ? (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1.5">
-                            To (Recipient)
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="name@example.com"
-                            className="w-full px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1.5">
-                            Subject
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Enter subject line"
-                            className="w-full px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1.5">
-                            Body
-                          </label>
-                          <textarea
-                            rows={4}
-                            placeholder="Email content..."
-                            className="w-full px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 resize-none"
-                          />
-                        </div>
-                      </div>
-                    ) : selectedNode.data.app.toLowerCase().includes("slack") ||
-                      selectedNode.data.app
-                        .toLowerCase()
-                        .includes("discord") ? (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1.5">
-                            Channel
-                          </label>
-                          <select className="w-full px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white focus:outline-none focus:border-orange-500">
-                            <option>#general</option>
-                            <option>#random</option>
-                            <option>#alerts</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1.5">
-                            Message Text
-                          </label>
-                          <textarea
-                            rows={3}
-                            placeholder="Type your message..."
-                            className="w-full px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 resize-none"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1.5">
-                            Action Input
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Enter value..."
-                            className="w-full px-3 py-2 bg-[#1f2937] border border-[#374151] rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 4. Advanced & Delete */}
-                <div className="pt-2 border-t border-[#374151] mt-2">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 mt-2">
-                    Advanced
-                  </h4>
-                  <div className="flex items-center justify-between p-3 bg-[#1f2937] border border-[#374151] rounded-lg mb-3">
-                    <span className="text-sm font-medium text-gray-300">
-                      Retry on Failure
-                    </span>
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="w-4 h-4 text-orange-600 bg-[#111827] border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
-                    />
-                  </div>
-                </div>
-                <div className="pt-2">
-                  <button
-                    onClick={() => deleteNode(selectedNode.id)}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-900/20 text-red-400 font-medium rounded-lg hover:bg-red-900/40 transition border border-red-900/30 w-full"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete Node
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Config Panel */}
+        <ConfigPanel selectedNode={selectedNode} onClose={() => setSelectedNode(null)} onUpdateNode={updateNode} onDeleteNode={deleteNode} onDuplicateNode={duplicateNode} />
       </div>
+
+      <CommandKModal isOpen={showCmdK} onClose={() => setShowCmdK(false)} onAction={(action) => { if (action === 'toggle-cmdk') setShowCmdK((v) => !v); }} />
     </div>
   );
 };

@@ -12,40 +12,33 @@ import { Analytics } from './pages/Analytics';
 import { Templates } from './pages/Templates';
 import { Settings } from './pages/Settings';
 import { AppLayout } from './layouts/AppLayout';
+import AuthCallback from './pages/AuthCallback';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
-  // Bypassed for now: Always render children
-  return children;
-
-  /* Original ProtectedRoute logic
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-obsidian">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return isAuthenticated ? children : <Navigate to="/login" />;
-  */
 };
 
 const PublicRoute = ({ children, allowAuthenticated = false }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  // Bypassed for now: Always render children
-  return children;
+  if (loading) return null;
 
-  /* Original PublicRoute logic
   // If allowAuthenticated is true, show the page even if authenticated
   // Otherwise, redirect authenticated users to home
   if (!allowAuthenticated && isAuthenticated) {
     return <Navigate to="/home" />;
   }
   return children;
-  */
 };
 
 function App() {
@@ -72,6 +65,7 @@ function App() {
                 </PublicRoute>
               }
             />
+            <Route path="/auth-callback" element={<AuthCallback />} />
 
             {/* Protected routes - require authentication */}
             <Route

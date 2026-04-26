@@ -222,7 +222,7 @@ export const features = [
 export const pricingPlans = [
   {
     name: 'Starter',
-    price: '$29',
+    price: '₹1,999',
     period: '/month',
     description: 'Perfect for individuals and small businesses',
     features: [
@@ -236,7 +236,7 @@ export const pricingPlans = [
   },
   {
     name: 'Professional',
-    price: '$99',
+    price: '₹7,999',
     period: '/month',
     description: 'For growing businesses',
     features: [

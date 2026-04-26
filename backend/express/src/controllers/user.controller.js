@@ -1,5 +1,5 @@
 const User = require("../models/user.models");
-// const { sendVerificationEmail } = require("../utils/sendingMail.utils");
+const EmailService = require("../services/EmailService");
 const jwt = require("jsonwebtoken");
 
 // Register user controller
@@ -55,8 +55,8 @@ const registerUser = async (req, res) => {
     }
     
 
-    // 7. verify the user email address by sending a token to the user's email address
-    // await sendVerificationEmail(user.email, user.verificationToken);
+    // 7. Fire webhook to send welcome email
+    EmailService.send(user.email, user.name, 'welcome');
 
     // 8. send response
     return res.status(201).json({
@@ -176,6 +176,12 @@ const login = async (req, res) => {
 
     res.cookie("jwtToken", jwtToken, cookieOptions);
 
+    // Trigger security alert email asynchronously
+    EmailService.send(user.email, user.name, 'security', { 
+      ip: req.ip || 'Unknown', 
+      method: 'Password Auth' 
+    });
+
     // 10. send response with token in body as fallback for cross-origin issues
     return res.status(200).json({
       status: true,
@@ -264,4 +270,94 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, login, getProfile, logout };
+// Forgot Password -> Send OTP
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ status: false, message: "Email required" });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordToken = otp;
+    user.resetPasswordTokenExpiry = Date.now() + 10 * 60 * 1000; // 10 mins
+    await user.save();
+
+    // Send OTP via Webhook
+    EmailService.send(user.email, user.name, 'otp', { otp });
+
+    return res.status(200).json({ status: true, message: "OTP sent to email" });
+  } catch (error) {
+    console.error("Forgot password failed", error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+// Reset Password with OTP
+const resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ status: false, message: "All fields are required" });
+  }
+
+  try {
+    const user = await User.findOne({
+      email,
+      resetPasswordToken: otp,
+      resetPasswordTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ status: false, message: "Invalid or expired OTP" });
+    }
+
+    // Since we're changing password, we need to hash it.
+    // userSchema has pre-save hook, so we just set it.
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordTokenExpiry = undefined;
+    await user.save();
+
+    // Trigger security email
+    EmailService.send(user.email, user.name, 'security', { ip: req.ip || 'Unknown', method: 'Password Reset via OTP' });
+
+    return res.status(200).json({ status: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Reset password failed", error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+// Update user profile
+const updateProfile = async (req, res) => {
+  const { name, avatar } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ status: false, message: "User not found" });
+
+    if (name) user.name = name;
+    if (avatar) user.avatar = avatar;
+
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error("Update profile failed", error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+module.exports = { registerUser, login, getProfile, logout, forgotPassword, resetPassword, updateProfile };

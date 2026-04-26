@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,79 +21,110 @@ import {
   ShieldCheck,
   Cpu,
   Database,
-  Globe
+  Globe,
+  Terminal,
+  Box,
+  LayoutDashboard
 } from 'lucide-react';
 
-const StatCard = ({ icon: Icon, label, value, trend, isPositive, colorClass }) => (
+// --- INDUSTRIAL COMPONENTS ---
+
+const MetricPanel = ({ icon: Icon, label, value, trend, isPositive, index }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-xl p-5 shadow-sm hover:shadow-md transition-all"
+    transition={{ delay: index * 0.1 }}
+    className="relative group p-6 bg-surface-1 border border-white/5 hover:border-accent/40 transition-all duration-500 overflow-hidden"
   >
-    <div className="flex items-center justify-between mb-4">
-      <div className={`p-2.5 rounded-lg ${colorClass} bg-opacity-10`}>
-        <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />
+    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
+      <Icon className="w-12 h-12" />
+    </div>
+    
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-2">
+        <div className="w-1.5 h-1.5 bg-accent/40" />
+        <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/30">{label}</span>
       </div>
-      <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${isPositive ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400'
-        }`}>
-        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
-        {trend}
+      <div className={`font-mono text-[10px] ${isPositive ? 'text-accent-success' : 'text-accent-danger'}`}>
+        {isPositive ? '+' : '-'}{trend}
       </div>
     </div>
-    <div>
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</h3>
+
+    <div className="flex items-baseline gap-2">
+      <h3 className="text-3xl font-black tracking-tighter text-white font-mono">{value}</h3>
+      <div className="w-8 h-[1px] bg-white/10" />
+    </div>
+
+    {/* Kinetic Bottom Accent */}
+    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-white/5" />
+    <div className="absolute bottom-0 left-0 h-[1px] bg-accent w-0 group-hover:w-full transition-all duration-700" />
+  </motion.div>
+);
+
+const ActivityRow = ({ title, status, time, type, index }) => (
+  <motion.div 
+    initial={{ opacity: 0, x: -10 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.3 + index * 0.05 }}
+    className="flex items-center justify-between py-4 px-4 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] group transition-all"
+  >
+    <div className="flex items-center gap-6">
+      <div className="relative">
+        <div className={`w-12 h-12 flex items-center justify-center bg-surface-2 border border-white/5 group-hover:border-accent/30 transition-all`}>
+          <Workflow className={`w-5 h-5 ${status === 'success' ? 'text-accent-success' : status === 'failed' ? 'text-accent-danger' : 'text-accent'}`} />
+        </div>
+        {/* Status Pulse */}
+        <div className={`absolute -top-1 -right-1 w-2 h-2 ${status === 'success' ? 'bg-accent-success' : status === 'failed' ? 'bg-accent-danger' : 'bg-accent'} animate-pulse`} />
+      </div>
+      
+      <div>
+        <h4 className="text-sm font-bold text-white group-hover:text-accent transition-colors">
+          {title}
+        </h4>
+        <div className="flex items-center gap-3 mt-1">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-white/20">{type}</span>
+          <div className="w-1 h-1 bg-white/10" />
+          <span className="text-[10px] font-medium text-white/40 italic">{time}</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="flex items-center gap-8">
+      <div className="hidden md:block font-mono text-[9px] uppercase tracking-[0.2em] text-white/30">
+        STATUS_CODE: <span className={status === 'success' ? 'text-accent-success' : 'text-accent-danger'}>{status.toUpperCase()}</span>
+      </div>
+      <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-accent group-hover:translate-x-1 transition-all" />
     </div>
   </motion.div>
 );
 
-const ActivityItem = ({ title, status, time, type }) => (
-  <div className="flex items-center justify-between py-4 border-b border-gray-100 dark:border-[#2a2a2a] last:border-0 hover:bg-gray-50/50 dark:hover:bg-[#222222]/50 px-2 rounded-lg transition-all cursor-pointer group">
-    <div className="flex items-center gap-4">
-      <div className="relative">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${status === 'success' ? 'bg-green-100 dark:bg-green-950/20' :
-          status === 'failed' ? 'bg-red-100 dark:bg-red-950/20' : 'bg-orange-100 dark:bg-orange-950/20'
-          }`}>
-          <Workflow className={`w-5 h-5 ${status === 'success' ? 'text-green-600 dark:text-green-400' :
-            status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
-            }`} />
-        </div>
-        <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-[#1a1a1a] ${status === 'success' ? 'bg-green-500' : status === 'failed' ? 'bg-red-500' : 'bg-orange-500'
-          }`} />
-      </div>
-      <div>
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">
-          {title}
-        </h4>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500">
-            {type}
-          </span>
-          <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
-          <span className="text-xs text-gray-500 dark:text-gray-400">{time}</span>
-        </div>
-      </div>
+const KineticButton = ({ children, primary = false, onClick, className = "" }) => (
+  <button
+    onClick={onClick}
+    className={`
+      relative px-6 py-3 font-bold uppercase tracking-widest text-[10px] transition-all duration-300 overflow-hidden group
+      ${primary ? 'bg-accent text-white' : 'bg-surface-2 text-white border border-white/5 hover:border-accent/40'}
+      ${className}
+    `}
+  >
+    <div className="relative z-10 flex items-center justify-center gap-2">
+      {children}
     </div>
-    <div className="flex items-center gap-3">
-      <div className={`hidden sm:flex px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${status === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-950/10 dark:text-green-500' :
-        status === 'failed' ? 'bg-red-50 text-red-700 dark:bg-red-950/10 dark:text-red-500' : 'bg-orange-50 text-orange-700 dark:bg-orange-950/10 dark:text-orange-500'
-        }`}>
-        {status}
-      </div>
-      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors" />
-    </div>
-  </div>
+    <div className={`absolute top-0 left-0 w-1 h-1 border-t border-l border-white/30 group-hover:border-accent`} />
+    <div className={`absolute bottom-0 right-0 w-1 h-1 border-b border-r border-white/30 group-hover:border-accent`} />
+  </button>
 );
+
+// --- MAIN PAGE ---
 
 export const Home = () => {
   const navigate = useNavigate();
 
   const stats = [
-    { icon: Workflow, label: 'Active Workflows', value: '24', trend: '12%', isPositive: true, colorClass: 'bg-orange-500' },
-    { icon: Play, label: 'Total Executions', value: '1,842', trend: '8%', isPositive: true, colorClass: 'bg-blue-500' },
-    { icon: CheckCircle2, label: 'Success Rate', value: '99.2%', trend: '0.4%', isPositive: true, colorClass: 'bg-green-500' },
-    { icon: Zap, label: 'Compute Usage', value: '64%', trend: '5%', isPositive: false, colorClass: 'bg-purple-500' },
+    { icon: Workflow, label: 'Active Workflows', value: '24', trend: '12%', isPositive: true },
+    { icon: Play, label: 'Executions', value: '1,842', trend: '8%', isPositive: true },
+    { icon: CheckCircle2, label: 'Success Rate', value: '99.2%', trend: '0.4%', isPositive: true },
+    { icon: Zap, label: 'Resource Load', value: '64%', trend: '5%', isPositive: false },
   ];
 
   const recentActivity = [
@@ -104,140 +136,164 @@ export const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-[#0a0a0a] p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-obsidian text-white font-sans selection:bg-accent selection:text-white p-8">
+      <div className="max-w-7xl mx-auto space-y-12">
+
+        {/* --- GRID BACKGROUND OVERLAY (Subtle) --- */}
+        <div className="fixed inset-0 z-0 opacity-10 pointer-events-none surface-dot-grid" />
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              Welcome back, Demo User
+            <div className="flex items-center gap-3 mb-4">
+              <div className="px-2 py-1 bg-accent/10 border border-accent/30 text-[9px] font-mono text-accent uppercase tracking-widest">
+                Identity: USER_DEMO_01
+              </div>
+              <div className="w-8 h-[1px] bg-white/10" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white">
+              SYSTEM <span className="text-accent italic">DASHBOARD</span>
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Here is what's happening with your automations today.
+            <p className="text-white/40 mt-4 text-sm font-medium tracking-tight">
+              Real-time telemetry and execution logs for current agentic architectures.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-lg shadow-sm">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">System Functional</span>
+          
+          <div className="flex items-center gap-6">
+            <div className="hidden lg:flex flex-col items-end">
+              <span className="text-[9px] font-mono text-white/20 uppercase tracking-[0.4em]">Infrastructure Health</span>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className={`w-1 h-3 ${i < 4 ? 'bg-accent-success' : 'bg-accent-success/20'}`} />
+                  ))}
+                </div>
+                <span className="text-[10px] font-black text-accent-success uppercase">Optimal</span>
+              </div>
             </div>
-            <button
-              onClick={() => navigate('/workflows/builder')}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-sm transition-all hover:shadow-lg hover:shadow-orange-500/20"
-            >
-              <Plus className="w-4 h-4" />
-              Create New
-            </button>
+            <KineticButton primary onClick={() => navigate('/workflows/builder')}>
+              <Plus className="w-4 h-4" /> New Architecture
+            </KineticButton>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border-l border-t border-white/[0.03]">
           {stats.map((stat, idx) => (
-            <StatCard key={idx} {...stat} />
+            <MetricPanel key={idx} index={idx} {...stat} />
           ))}
         </div>
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
 
           {/* Recent Activity Feed */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-2xl shadow-sm overflow-hidden text-clip">
-              <div className="p-6 border-b border-gray-100 dark:border-[#2a2a2a] flex items-center justify-between">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-surface-1 border border-white/[0.05] overflow-hidden">
+              <div className="p-8 border-b border-white/[0.03] flex items-center justify-between bg-white/[0.01]">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">Recent Activity</h2>
-                  <p className="text-xs text-gray-500 mt-0.5 font-medium italic">Latest workflow executions and events</p>
+                  <h2 className="text-lg font-black tracking-tighter uppercase">Execution Logs</h2>
+                  <p className="text-[10px] font-mono text-white/30 mt-1 uppercase tracking-widest">Global Telemetry // Live Stream</p>
                 </div>
-                <button className="text-sm font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 transition-colors">
-                  View History
+                <button className="text-[10px] font-bold text-accent hover:text-accent-dim transition-colors uppercase tracking-[0.2em]">
+                  Dump Logs
                 </button>
               </div>
-              <div className="p-2 sm:p-4">
+              <div className="p-2">
                 {recentActivity.map((activity, idx) => (
-                  <ActivityItem key={idx} {...activity} />
+                  <ActivityRow key={idx} index={idx} {...activity} />
                 ))}
+              </div>
+              {/* Bottom Filler */}
+              <div className="p-6 bg-white/[0.01] flex justify-center">
+                 <button className="text-[9px] font-black text-white/20 hover:text-white transition-all uppercase tracking-[0.5em]">
+                   Load Older Records
+                 </button>
               </div>
             </div>
 
-            {/* AI Suggestion Card */}
+            {/* AI Opportunity Card */}
             <motion.div
-              whileHover={{ scale: 1.01 }}
-              className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden group cursor-pointer"
+              whileHover={{ x: 5 }}
+              className="relative p-10 bg-accent group cursor-pointer overflow-hidden"
             >
-              <div className="relative z-10 flex items-center justify-between">
+              <div className="relative z-10 flex items-center justify-between gap-12 text-white">
                 <div className="max-w-md">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span className="text-xs font-bold tracking-wider uppercase">AI Opportunity</span>
+                  <div className="flex items-center gap-3 mb-6">
+                    <Terminal className="w-6 h-6" />
+                    <span className="text-[10px] font-mono font-black tracking-[0.3em] uppercase">Architecture Suggestion</span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Automate your Customer Support</h3>
-                  <p className="text-orange-50 text-sm opacity-90">
-                    Based on your active apps, we can set up an AI Agent to handle 60% of common queries automatically.
+                  <h3 className="text-3xl font-black tracking-tighter mb-4 leading-none uppercase">Scale Agentic Support</h3>
+                  <p className="text-white/80 text-sm font-medium leading-relaxed">
+                    Based on your active integrations, we can deploy a self-healing AI Support Node to handle 60% of incoming telemetry.
                   </p>
                 </div>
-                <ArrowRight className="w-8 h-8 opacity-50 group-hover:opacity-100 group-hover:translate-x-2 transition-all" />
+                <ArrowRight className="w-12 h-12 opacity-30 group-hover:opacity-100 group-hover:translate-x-4 transition-all duration-500" />
               </div>
-              {/* Background Decoration */}
-              <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all" />
+              {/* Technical Grid Overlay */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none surface-dot-grid" />
+              <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-[100px] group-hover:scale-150 transition-transform duration-1000" />
             </motion.div>
           </div>
 
           {/* Sidebar / Quick Actions */}
-          <div className="space-y-6">
+          <div className="space-y-12">
 
             {/* Quick Actions Grid */}
-            <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-2xl p-6 shadow-sm">
-              <h2 className="text-md font-bold text-gray-900 dark:text-white mb-4">Quick Access</h2>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="bg-surface-1 border border-white/[0.05] p-8">
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-8">Quick Protocols</h2>
+              <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: FolderKanban, label: 'Templates', path: '/templates', color: 'text-blue-500' },
-                  { icon: Sparkles, label: 'AI Tools', path: '/ai-builder', color: 'text-purple-500' },
-                  { icon: BarChart3, label: 'Insight', path: '/analytics', color: 'text-green-500' },
-                  { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
+                  { icon: FolderKanban, label: 'Blueprints', path: '/templates' },
+                  { icon: Sparkles, label: 'Logic Builder', path: '/ai-builder' },
+                  { icon: BarChart3, label: 'Telemetry', path: '/analytics' },
+                  { icon: Settings, label: 'Config', path: '/settings' },
                 ].map((action, idx) => (
                   <button
                     key={idx}
                     onClick={() => navigate(action.path)}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-100 dark:border-[#2a2a2a] hover:border-orange-200 dark:hover:border-orange-900/50 hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-all group"
+                    className="flex flex-col items-center justify-center aspect-square bg-surface-2 border border-white/5 hover:border-accent/40 transition-all group"
                   >
-                    <action.icon className={`w-6 h-6 mb-2 ${action.color} group-hover:scale-110 transition-transform`} />
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{action.label}</span>
+                    <action.icon className="w-6 h-6 mb-4 text-white/40 group-hover:text-accent group-hover:scale-110 transition-all" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/30 group-hover:text-white">{action.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Health Indicators */}
-            <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] rounded-2xl p-6 shadow-sm">
-              <h2 className="text-md font-bold text-gray-900 dark:text-white mb-4">Infrastructure Health</h2>
-              <div className="space-y-4">
+            <div className="bg-surface-1 border border-white/[0.05] p-8">
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-8">Network Nodes</h2>
+              <div className="space-y-6">
                 {[
                   { label: 'API Gateway', status: 'Healthy', icon: Globe },
-                  { label: 'Worker Clusters', status: 'Healthy', icon: Cpu },
-                  { label: 'Data Latency', status: 'Low', icon: Database },
+                  { label: 'Worker Clusters', status: 'Syncing', icon: Cpu },
+                  { label: 'Core Database', status: 'Healthy', icon: Database },
                 ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-1.5 bg-gray-50 dark:bg-[#222222] rounded-md">
-                        <item.icon className="w-4 h-4 text-gray-500" />
+                  <div key={idx} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-surface-2 border border-white/5 group-hover:border-accent/20 transition-all">
+                        <item.icon className="w-4 h-4 text-white/40 group-hover:text-white" />
                       </div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.label}</span>
+                      <span className="text-xs font-bold text-white/60 group-hover:text-white transition-colors">{item.label}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-green-500 uppercase tracking-tighter">{item.status}</span>
+                    <span className={`text-[9px] font-mono uppercase tracking-widest ${item.status === 'Healthy' ? 'text-accent-success' : 'text-accent'}`}>{item.status}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Help / Docs Card */}
-            <div className="bg-gray-900 rounded-2xl p-6 text-white relative overflow-hidden">
-              <h3 className="text-lg font-bold mb-2">Need help?</h3>
-              <p className="text-gray-400 text-xs mb-4">Explore the documentation or contact 24/7 expert support.</p>
-              <button className="w-full py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-semibold transition-all">
-                Read Documentation
-              </button>
+            <div className="relative p-8 bg-surface-2 border border-white/5 overflow-hidden group">
+              <div className="relative z-10">
+                <h3 className="text-lg font-black tracking-tighter uppercase mb-2">Protocol Docs</h3>
+                <p className="text-white/40 text-xs font-medium mb-6 leading-relaxed">System documentation for deep infrastructure integration.</p>
+                <KineticButton className="w-full">
+                  Access Manual
+                </KineticButton>
+              </div>
+              {/* Decorative Accent */}
+              <div className="absolute top-0 right-0 w-16 h-16 bg-accent/5 -rotate-45 translate-x-8 -translate-y-8" />
             </div>
 
           </div>

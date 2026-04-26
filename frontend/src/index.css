@@ -1,87 +1,258 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── BASE RESET ─── */
 @layer base {
   * {
-    @apply border-gray-200 dark:border-[#2a2a2a];
+    @apply border-white/[0.06];
   }
   body {
-    @apply bg-white dark:bg-[#111111] text-gray-900 dark:text-gray-100;
+    @apply bg-[#030303] text-gray-100 font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection {
+    @apply bg-accent/30 text-white;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/[0.08] rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/[0.14];
   }
 }
 
+/* ─── GLASS COMPONENTS ─── */
 @layer components {
+  .glass-panel {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.06];
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .glass-panel-solid {
+    @apply bg-surface-2 backdrop-blur-xl border border-white/[0.06];
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.03),
+      0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  .glass-button {
+    @apply bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] 
+           hover:bg-white/[0.08] hover:border-white/[0.12]
+           transition-all duration-200 ease-out;
+  }
+
+  .glass-input {
+    @apply bg-white/[0.04] border border-white/[0.08] rounded-lg
+           text-white placeholder-white/20
+           focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/20
+           transition-all duration-200;
+  }
+
   .btn-primary {
-    @apply bg-orange-500 text-white hover:bg-orange-600 transition-colors;
+    @apply bg-accent hover:bg-accent-dim text-white font-medium
+           transition-all duration-200 ease-out;
   }
-  
-  .btn-secondary {
-    @apply bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors;
+
+  .btn-ghost {
+    @apply text-white/50 hover:text-white hover:bg-white/[0.06]
+           transition-all duration-150;
   }
-  
-  .glass-card {
-    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200 dark:border-gray-800;
-  }
-  
-  .gradient-primary {
-    @apply bg-gradient-to-r from-orange-500 to-red-500;
-  }
-  
+
   .text-gradient {
-    @apply bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-accent-glow to-accent-cyan bg-clip-text text-transparent;
+  }
+
+  .surface-dot-grid {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }
 
-/* Cursor Hover Animations */
+/* ─── CANVAS DOT GRID ─── */
+.canvas-grid {
+  background-color: #030303;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ─── REACT FLOW OVERRIDES ─── */
+.react-flow__background {
+  background-color: #030303 !important;
+}
+
+.react-flow__controls {
+  background: rgba(10,10,14,0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  overflow: hidden !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  fill: rgba(255,255,255,0.4) !important;
+  transition: all 0.15s ease !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(255,255,255,0.06) !important;
+  fill: rgba(255,255,255,0.8) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__minimap {
+  background: rgba(10,10,14,0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round !important;
+}
+
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border: 2px solid rgba(255,255,255,0.15) !important;
+  background: #1a1a21 !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-flow__handle:hover,
+.react-flow__handle.connecting {
+  border-color: #6366f1 !important;
+  background: #6366f1 !important;
+  box-shadow: 0 0 12px rgba(99,102,241,0.6) !important;
+  transform: scale(1.3) !important;
+}
+
+/* ─── NODE STATUS INDICATORS ─── */
+.node-status-idle {
+  box-shadow: none;
+}
+.node-status-running {
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.4), 0 0 20px rgba(245,158,11,0.15);
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+.node-status-success {
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.4), 0 0 20px rgba(16,185,129,0.15);
+}
+.node-status-error {
+  box-shadow: 0 0 0 2px rgba(239,68,68,0.4), 0 0 20px rgba(239,68,68,0.15);
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(245,158,11,0.3), 0 0 15px rgba(245,158,11,0.1); }
+  50% { box-shadow: 0 0 0 2px rgba(245,158,11,0.6), 0 0 25px rgba(245,158,11,0.25); }
+}
+
+/* ─── BORDER BEAM (GSAP target) ─── */
+.border-beam-container {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.border-beam-container svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.border-beam-path {
+  fill: none;
+  stroke: url(#beam-gradient);
+  stroke-width: 2;
+  stroke-dasharray: 80 920;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+}
+
+/* ─── CRT LOG EFFECT ─── */
+.crt-line {
+  animation: flicker 0.15s ease-in-out;
+}
+
+@keyframes flicker {
+  0% { opacity: 0; transform: translateX(-4px); }
+  30% { opacity: 0.3; }
+  60% { opacity: 0.7; transform: translateX(1px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.crt-scanline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.01) 2px,
+    rgba(255,255,255,0.01) 4px
+  );
+  pointer-events: none;
+}
+
+/* ─── DATA PULSE ON EDGES ─── */
+.data-pulse-particle {
+  offset-path: var(--edge-path);
+  offset-distance: 0%;
+  animation: dataPulseTravel 2.5s ease-in-out infinite;
+}
+
+@keyframes dataPulseTravel {
+  0% { offset-distance: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* ─── MAGNETIC BUTTON HOVER ─── */
+.magnetic-btn {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+/* ─── COMMAND-K OVERLAY ─── */
+.cmdk-overlay {
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+}
+
+/* ─── UTILITY ANIMATIONS ─── */
 @layer utilities {
-  /* Smooth hover scale animations */
   .hover-lift {
     @apply transition-all duration-300 ease-out;
   }
-  
   .hover-lift:hover {
-    @apply -translate-y-1 scale-[1.02];
-  }
-  
-  /* Button hover animations */
-  button, a, [role="button"] {
-    @apply transition-all duration-200 ease-out;
-  }
-  
-  button:hover, a:hover, [role="button"]:hover {
-    @apply transform scale-105;
-  }
-  
-  /* Card hover animations */
-  .card-hover {
-    @apply transition-all duration-300 ease-out;
-  }
-  
-  .card-hover:hover {
-    @apply shadow-lg -translate-y-1 scale-[1.02];
-  }
-  
-  /* Image hover animations */
-  img {
-    @apply transition-transform duration-300 ease-out;
-  }
-  
-  /* Input field hover animations */
-  input, textarea, select {
-    @apply transition-all duration-200 ease-out;
-  }
-  
-  input:hover, textarea:hover, select:hover {
-    @apply border-orange-300 dark:border-orange-700;
-  }
-  
-  /* Icon hover animations */
-  svg {
-    @apply transition-transform duration-200 ease-out;
-  }
-  
-  button:hover svg, a:hover svg {
-    @apply transform scale-110;
+    @apply -translate-y-0.5;
   }
 }
