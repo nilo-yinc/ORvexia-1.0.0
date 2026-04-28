@@ -31,7 +31,8 @@ import {
   GitBranch,
   Search,
   MessageSquare,
-  Mail
+  Mail,
+  FileText
 } from 'lucide-react';
 import { features, testimonials, pricingPlans } from '../utils/MockData';
 
@@ -300,18 +301,18 @@ export const Landing = () => {
             </motion.div>
             
             <h1 className="hero-title text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
-              ORCHESTRATE THE <br />
-              <span className="text-accent italic">INVISIBLE.</span>
+              AUTOMATE BEYOND <br />
+              <span className="text-accent italic">LIMITS.</span>
             </h1>
             
             <p className="hero-title text-xl text-white/50 max-w-xl mb-12 font-medium leading-relaxed uppercase tracking-wider">
-              Connect your enterprise stack with self-healing, agentic architectures. 
-              The most advanced automation engine built for modern digital infrastructure.
+              The only industrial-grade automation engine with built-in Data Tables, 
+              Form Builders, and AI Agents. Scale your operations from zero to millions of tasks.
             </p>
 
             <div className="hero-title flex items-center gap-8">
               <KineticButton primary onClick={() => navigate('/home')}>
-                Launch Architect <ArrowRight className="w-4 h-4" />
+                Launch Architect <Zap className="w-4 h-4" />
               </KineticButton>
               <button className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all group">
                 <div className="w-10 h-[1px] bg-white/20 group-hover:bg-accent transition-all group-hover:w-16" />

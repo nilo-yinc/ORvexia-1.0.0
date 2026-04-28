@@ -1,0 +1,9 @@
+
+> express@1.0.0 start
+> node src/server.js
+
+Server is running on port 3000
+✅ MongoDB connected successfully
+📊 Database: orvexia
+[Ngrok] Tunnel active at: https://overcome-jargon-treading.ngrok-free.dev
+[Ngrok] Use this URL for Webhook Configurations!

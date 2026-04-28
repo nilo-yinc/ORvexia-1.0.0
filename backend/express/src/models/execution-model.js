@@ -11,12 +11,13 @@ const ExecutionSchema = new mongoose.Schema({
   // Global Status
   status: {
     type: String,
-    enum: ["PENDING", "RUNNING", "COMPLETED", "FAILED", "PAUSED"],
+    enum: ["PENDING", "RUNNING", "COMPLETED", "FAILED", "PAUSED", "STOPPED"],
     default: "PENDING",
   },
 
   // LangGraph State Checkpoint (The "MemorySaver" state)
   checkpoint: { type: mongoose.Schema.Types.Mixed, default: {} },
+  contextData: { type: mongoose.Schema.Types.Mixed, default: {} },
 
   // EMBEDDED STEPS (The "Lunchbox" Strategy) for high-speed reads [cite: 92]
   steps: [
@@ -25,7 +26,7 @@ const ExecutionSchema = new mongoose.Schema({
       label: String, // e.g., "Check Inventory"
       status: {
         type: String,
-        enum: ["PENDING", "RUNNING", "SUCCESS", "FAILED"],
+        enum: ["PENDING", "RUNNING", "SUCCESS", "FAILED", "STOPPED", "SKIPPED"],
       },
       input: mongoose.Schema.Types.Mixed,
       output: mongoose.Schema.Types.Mixed, // Result from API/AI

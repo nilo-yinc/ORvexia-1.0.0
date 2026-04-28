@@ -1,11 +1,13 @@
 const Workflow = require("../models/workflow-model");
 const WorkflowVersion = require("../models/workflowVersion-model");
 const crypto = require('crypto');
+const Execution = require("../models/execution-model");
+const { runWorkflow } = require("../engine/workflowRunner");
 
 // 1. Create/Update a Workflow (The "Save" Button)
 const createWorkflow = async (req, res) => {
   try {
-    const { name, triggerSlug, nodes, edges } = req.body;
+    const { name, description, triggerSlug, nodes = [], edges = [] } = req.body;
     const owner_id = req.user.id;
 
     // Generate slug if not provided
@@ -26,16 +28,21 @@ const createWorkflow = async (req, res) => {
 
     if (!workflow) {
       workflow = await Workflow.create({
-        name,
+        name: name || "Untitled Workflow",
+        description,
         owner_id,
         triggerSlug: slug,
       });
     } else {
+        if (String(workflow.owner_id) !== String(owner_id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
+        }
         // Update name if changed
         if (name) {
             workflow.name = name;
-            await workflow.save();
         }
+        if (description !== undefined) workflow.description = description;
+        await workflow.save();
     }
 
     // B. Increment Version (Count + 1)
@@ -54,6 +61,7 @@ const createWorkflow = async (req, res) => {
     // D. Update the Pointer (Make it Live!)
     workflow.active_version_id = versionDoc._id;
     workflow.is_active = true;
+    workflow.updatedAt = new Date();
     await workflow.save();
 
     res.json({ success: true, workflowId: workflow._id, version: newVersion, triggerSlug: workflow.triggerSlug });
@@ -66,9 +74,30 @@ const getworkflows = async (req, res) => {
     try {
         // Query the "Container" collection
         // We select specific fields to keep the response light and fast.
-        const workflows = await Workflow.find()
+        const workflows = await Workflow.find({ owner_id: req.user.id }).sort({ updatedAt: -1 });
 
-        res.json(workflows);
+        const results = await Promise.all(workflows.map(async (workflow) => {
+            let nodes = [];
+            if (workflow.active_version_id) {
+                try {
+                    const version = await WorkflowVersion.findById(workflow.active_version_id);
+                    if (version && version.definition) {
+                        nodes = (version.definition.nodes || []).map(n => ({
+                            id: n.id, data: { label: n.data?.label, category: n.data?.category }
+                        }));
+                    }
+                } catch(e) {}
+            }
+            return {
+                ...workflow.toObject(),
+                status: workflow.is_active ? "active" : "draft",
+                executions: workflow.stats?.total_runs || 0,
+                successRate: workflow.stats?.success_rate || 0,
+                nodes,
+            };
+        }));
+
+        res.json(results);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -82,6 +111,9 @@ const getWorkflowById = async (req, res) => {
         const workflow = await Workflow.findById(id);
         if (!workflow) {
             return res.status(404).json({ error: "Workflow not found" });
+        }
+        if (String(workflow.owner_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
         }
 
         // Step B: Find the Logic (Nodes & Edges)
@@ -108,9 +140,6 @@ const getWorkflowById = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-const { runLangGraphWorkflow } = require("../engine/langGraphOrchestrator");
-const Execution = require("../models/execution-model");
-
 const executeWorkflow = async (req, res) => {
     try {
         const { id } = req.params;
@@ -118,6 +147,9 @@ const executeWorkflow = async (req, res) => {
         const workflow = await Workflow.findById(id);
         if (!workflow || !workflow.active_version_id) {
             return res.status(404).json({ error: "Workflow or active version not found" });
+        }
+        if (String(workflow.owner_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
         }
 
         const activeVersion = await WorkflowVersion.findById(workflow.active_version_id);
@@ -129,6 +161,7 @@ const executeWorkflow = async (req, res) => {
             version_id: activeVersion._id,
             status: "PENDING",
             checkpoint: { contextData: req.body || {} },
+            contextData: req.body || {},
             logs: [],
             steps: nodes.map(n => ({
                 nodeId: n.id,
@@ -139,13 +172,9 @@ const executeWorkflow = async (req, res) => {
 
         // Fire & Forget (run in background)
         // Note: req.io comes from server.js middleware
-        runLangGraphWorkflow(nodes, edges, execution, req.io).catch(err => {
+        runWorkflow(nodes, edges, execution, req.io).catch(err => {
             console.error("Background workflow execution failed:", err);
         });
-
-        // Update stats
-        workflow.stats.total_runs += 1;
-        await workflow.save();
 
         res.json({ success: true, executionId: execution._id, message: "Workflow triggered." });
     } catch (err) {
@@ -153,4 +182,84 @@ const executeWorkflow = async (req, res) => {
     }
 };
 
-module.exports = { createWorkflow, getworkflows, getWorkflowById, executeWorkflow };
+const getWorkflowExecutions = async (req, res) => {
+    try {
+        const workflow = await Workflow.findById(req.params.id);
+        if (!workflow) return res.status(404).json({ error: "Workflow not found" });
+        if (String(workflow.owner_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
+        }
+
+        const executions = await Execution.find({ workflow_id: workflow._id })
+            .sort({ startedAt: -1 })
+            .limit(Number(req.query.limit || 25));
+
+        res.json(executions);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getGlobalExecutions = async (req, res) => {
+    try {
+        const workflows = await Workflow.find({ owner_id: req.user.id });
+        const workflowIds = workflows.map(w => w._id);
+        
+        const executions = await Execution.find({ workflow_id: { $in: workflowIds } })
+            .sort({ startedAt: -1 })
+            .limit(Number(req.query.limit || 50))
+            .populate('workflow_id', 'name');
+
+        res.json(executions);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const deleteWorkflow = async (req, res) => {
+    try {
+        const workflow = await Workflow.findById(req.params.id);
+        if (!workflow) return res.status(404).json({ error: "Workflow not found" });
+        if (String(workflow.owner_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
+        }
+
+        await Promise.all([
+            WorkflowVersion.deleteMany({ workflow_id: workflow._id }),
+            Execution.deleteMany({ workflow_id: workflow._id }),
+            Workflow.deleteOne({ _id: workflow._id }),
+        ]);
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const toggleWorkflow = async (req, res) => {
+    try {
+        const workflow = await Workflow.findById(req.params.id);
+        if (!workflow) return res.status(404).json({ error: "Workflow not found" });
+        if (String(workflow.owner_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
+        }
+
+        workflow.is_active = typeof req.body.is_active === "boolean" ? req.body.is_active : !workflow.is_active;
+        workflow.updatedAt = new Date();
+        await workflow.save();
+        res.json({ success: true, workflow });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = {
+    createWorkflow,
+    getworkflows,
+    getWorkflowById,
+    executeWorkflow,
+    getWorkflowExecutions,
+    getGlobalExecutions,
+    deleteWorkflow,
+    toggleWorkflow,
+};

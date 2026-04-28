@@ -1,6 +1,12 @@
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const User = require('../models/user.models');
+require('./loadEnv');
+
+const oauthBaseUrl =
+  process.env.OAUTH_PUBLIC_URL ||
+  process.env.BACKEND_PUBLIC_URL ||
+  `http://localhost:${process.env.PORT || 3000}`;
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
@@ -19,7 +25,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(new GitHubStrategy({
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/api/v1/auth/github/callback"
+      callbackURL: `${oauthBaseUrl}/api/v1/auth/github/callback`
     },
     async function(accessToken, refreshToken, profile, done) {
       try {
@@ -69,7 +75,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/api/v1/auth/google/callback"
+      callbackURL: `${oauthBaseUrl}/api/v1/auth/google/callback`
     },
     async function(accessToken, refreshToken, profile, done) {
       try {

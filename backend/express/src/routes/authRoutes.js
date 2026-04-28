@@ -3,13 +3,14 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const EmailService = require('../services/EmailService');
 const router = express.Router();
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // Initiate GitHub Login
 router.get('/github', passport.authenticate('github', { scope: [ 'user:email' ] }));
 
 // GitHub Callback
 router.get('/github/callback', 
-  passport.authenticate('github', { failureRedirect: 'http://localhost:5173/login?error=auth_failed' }),
+  passport.authenticate('github', { failureRedirect: `${clientUrl}/login?error=auth_failed` }),
   function(req, res) {
     // Generate JWT for the OAuth user so the frontend can persist the session
     const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
@@ -23,16 +24,42 @@ router.get('/github/callback',
     });
     
     // Redirect with token so the frontend can store it
-    res.redirect(`http://localhost:5173/auth-callback?token=${token}`);
+    res.redirect(`${clientUrl}/auth-callback?token=${token}`);
   }
 );
 
+const googleScopes = [
+  'profile',
+  'email',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/calendar.freebusy',
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/documents',
+];
+
+const normalizeRedirectPath = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (!value.startsWith("/")) return "";
+  if (value.startsWith("//")) return "";
+  return value;
+};
+
 // Initiate Google Login
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req, res, next) => {
+  const redirectPath = normalizeRedirectPath(req.query.redirect);
+  passport.authenticate('google', {
+    scope: googleScopes,
+    accessType: 'offline',
+    prompt: 'consent',
+    state: redirectPath ? encodeURIComponent(redirectPath) : undefined,
+  })(req, res, next);
+});
 
 // Google Callback
 router.get('/google/callback', 
-  passport.authenticate('google', { failureRedirect: 'http://localhost:5173/login?error=auth_failed' }),
+  passport.authenticate('google', { failureRedirect: `${clientUrl}/login?error=auth_failed` }),
   function(req, res) {
     // Generate JWT for the OAuth user
     const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
@@ -45,8 +72,9 @@ router.get('/google/callback',
       method: 'Google OAuth' 
     });
     
-    // Redirect with token
-    res.redirect(`http://localhost:5173/auth-callback?token=${token}`);
+    const redirectPath = normalizeRedirectPath(req.query.state ? decodeURIComponent(req.query.state) : "");
+    const redirectQuery = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : "";
+    res.redirect(`${clientUrl}/auth-callback?token=${token}${redirectQuery}`);
   }
 );
 

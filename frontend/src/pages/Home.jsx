@@ -24,7 +24,8 @@ import {
   Globe,
   Terminal,
   Box,
-  LayoutDashboard
+  LayoutDashboard,
+  RefreshCw
 } from 'lucide-react';
 
 // --- INDUSTRIAL COMPONENTS ---
@@ -119,21 +120,67 @@ const KineticButton = ({ children, primary = false, onClick, className = "" }) =
 
 export const Home = () => {
   const navigate = useNavigate();
+  const [recentActivity, setRecentActivity] = React.useState([]);
+  const [stats, setStats] = React.useState([
+    { icon: Workflow, label: 'Active Workflows', value: '0', trend: '0%', isPositive: true },
+    { icon: Play, label: 'Executions', value: '0', trend: '0%', isPositive: true },
+    { icon: CheckCircle2, label: 'Success Rate', value: '0%', trend: '0%', isPositive: true },
+    { icon: Zap, label: 'Resource Load', value: '0%', trend: '0%', isPositive: false },
+  ]);
 
-  const stats = [
-    { icon: Workflow, label: 'Active Workflows', value: '24', trend: '12%', isPositive: true },
-    { icon: Play, label: 'Executions', value: '1,842', trend: '8%', isPositive: true },
-    { icon: CheckCircle2, label: 'Success Rate', value: '99.2%', trend: '0.4%', isPositive: true },
-    { icon: Zap, label: 'Resource Load', value: '64%', trend: '5%', isPositive: false },
-  ];
+  const timeAgo = (date) => {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return new Date(date).toLocaleDateString();
+  };
 
-  const recentActivity = [
-    { title: 'Shopify Order Sync', status: 'success', time: '2 mins ago', type: 'INTEGRATION' },
-    { title: 'Customer Onboarding', status: 'processing', time: '5 mins ago', type: 'WORKFLOW' },
-    { title: 'Daily Analytics Report', status: 'success', time: '1 hour ago', type: 'AUTOMATION' },
-    { title: 'Lead Scraping Tool', status: 'failed', time: '3 hours ago', type: 'AI BUILDER' },
-    { title: 'Newsletter Blast', status: 'success', time: '5 hours ago', type: 'SCHEDULED' },
-  ];
+  React.useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const [execRes, wfRes] = await Promise.all([
+          fetch('/api/workflows/executions?limit=5', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch('/api/workflows', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
+
+        const executions = await execRes.json();
+        const workflows = await wfRes.json();
+
+        if (Array.isArray(executions)) {
+          setRecentActivity(executions.map(ex => ({
+            title: ex.workflow_id?.name || 'Automated Workflow',
+            status: ex.status.toLowerCase(),
+            time: timeAgo(ex.startedAt),
+            type: 'TELEMETRY'
+          })));
+          
+          const successCount = executions.filter(e => e.status === 'COMPLETED').length;
+          const rate = executions.length > 0 ? ((successCount / executions.length) * 100).toFixed(1) : 0;
+          
+          setStats([
+            { icon: Workflow, label: 'Active Workflows', value: workflows.filter(w => w.is_active).length.toString(), trend: 'NEW', isPositive: true },
+            { icon: Play, label: 'Executions', value: executions.length.toString(), trend: 'LIVE', isPositive: true },
+            { icon: CheckCircle2, label: 'Success Rate', value: `${rate}%`, trend: 'REAL', isPositive: true },
+            { icon: Zap, label: 'Resource Load', value: 'Minimal', trend: 'LOW', isPositive: true },
+          ]);
+        }
+      } catch (error) {
+        console.error("Dashboard fetch failed:", error);
+      }
+    };
+
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-obsidian text-white font-sans selection:bg-accent selection:text-white p-8">
@@ -244,9 +291,9 @@ export const Home = () => {
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-8">Quick Protocols</h2>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: FolderKanban, label: 'Blueprints', path: '/templates' },
-                  { icon: Sparkles, label: 'Logic Builder', path: '/ai-builder' },
-                  { icon: BarChart3, label: 'Telemetry', path: '/analytics' },
+                  { icon: LayoutDashboard, label: 'Interfaces', path: '/interfaces' },
+                  { icon: RefreshCw, label: 'Transfer', path: '/transfer' },
+                  { icon: Database, label: 'Data Tables', path: '/tables' },
                   { icon: Settings, label: 'Config', path: '/settings' },
                 ].map((action, idx) => (
                   <button

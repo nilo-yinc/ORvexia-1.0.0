@@ -1,13 +1,15 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { 
   User, Mail, Shield, Bell, LogOut, Lock, 
-  Camera, Check, AlertCircle, Loader2, Key,
+  Camera, Check, AlertCircle, Loader2, Key, Trash2,
   ChevronRight, ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const SettingPanel = ({ title, description, icon: Icon, children, index }) => (
   <motion.div
@@ -49,6 +51,11 @@ export const Settings = () => {
   const [newPassword, setNewPassword] = useState('');
   const [passLoading, setPassLoading] = useState(false);
 
+  useEffect(() => {
+    setName(user?.name || '');
+    setAvatar(user?.avatar || '');
+  }, [user?.name, user?.avatar]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -69,6 +76,13 @@ export const Settings = () => {
     }
   };
 
+  const removeAvatar = () => {
+    setAvatar('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const saveProfile = async () => {
     setLoading(true);
     setMessage({ type: '', text: '' });
@@ -86,7 +100,7 @@ export const Settings = () => {
     setPassLoading(true);
     setMessage({ type: '', text: '' });
     try {
-      const res = await axios.post('http://localhost:3000/api/v1/users/forgot-password', 
+      const res = await axios.post(`${API_BASE}/api/v1/users/forgot-password`, 
         { email: user.email },
         { withCredentials: true }
       );
@@ -104,7 +118,7 @@ export const Settings = () => {
   const verifyAndReset = async () => {
     setPassLoading(true);
     try {
-      const res = await axios.post('http://localhost:3000/api/v1/users/reset-password', 
+      const res = await axios.post(`${API_BASE}/api/v1/users/reset-password`, 
         {
           email: user.email,
           otp,
@@ -177,6 +191,16 @@ export const Settings = () => {
                     <span className="text-[8px] font-black text-white uppercase tracking-widest">Change Photo</span>
                   </button>
                 </div>
+                {avatar && (
+                  <button
+                    type="button"
+                    onClick={removeAvatar}
+                    className="mt-3 w-32 py-2 border border-white/10 hover:border-red-500/40 text-white/40 hover:text-red-400 text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Remove
+                  </button>
+                )}
                 <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
               </div>
 

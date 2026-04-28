@@ -13,6 +13,7 @@ const AuthCallback = () => {
   useEffect(() => {
     const token = searchParams.get('token');
     const error = searchParams.get('error');
+    const redirectPath = searchParams.get('redirect');
 
     if (error) {
       navigate('/login?error=' + error);
@@ -21,9 +22,9 @@ const AuthCallback = () => {
 
     if (token) {
       localStorage.setItem('token', token);
-      // Small delay to ensure state propagates
+      const target = redirectPath && redirectPath.startsWith('/') ? redirectPath : '/home';
       setTimeout(() => {
-        window.location.href = '/home';
+        window.location.href = target;
       }, 100);
     } else {
       navigate('/login?error=no_token');

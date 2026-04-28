@@ -91,7 +91,10 @@ export const AuthProvider = ({ children }) => {
         if (response.data.token) {
           localStorage.setItem('token', response.data.token);
         }
-        setUser(response.data.user);
+        setUser({
+          ...response.data.user,
+          avatar: response.data.user.avatar || null,
+        });
         return response.data;
       }
       throw new Error(response.data.message || 'Login failed');
@@ -142,7 +145,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/update-profile', { name, avatar });
       if (response.data.status) {
-        setUser(prev => ({ ...prev, name, avatar }));
+        setUser(prev => ({
+          ...prev,
+          ...response.data.user,
+          avatar: response.data.user.avatar || null,
+        }));
         return response.data;
       }
       throw new Error(response.data.message || 'Update failed');

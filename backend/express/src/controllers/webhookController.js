@@ -1,7 +1,7 @@
 const Workflow = require('../models/workflow-model');
 const WorkflowVersion = require('../models/workflowVersion-model');
 const Execution = require('../models/execution-model');
-const { runWorkflow } = require('../engine/engine');
+const { runWorkflow } = require('../engine/workflowRunner');
 
 const webhook = async (req, res) => {
     try {
@@ -13,6 +13,9 @@ const webhook = async (req, res) => {
         
         if (!workflow) {
             return res.status(404).json({ error: "Workflow not found" });
+        }
+        if (!workflow.is_active) {
+            return res.status(409).json({ error: "Workflow is paused" });
         }
         
         if (!workflow.active_version_id) {
@@ -28,8 +31,13 @@ const webhook = async (req, res) => {
             workflow_id: workflow._id,
             version_id: activeVersion._id,
             status: 'PENDING',
+            checkpoint: { contextData: inputData },
             contextData: inputData,
-            steps: []
+            steps: (activeVersion.definition.nodes || []).map(node => ({
+                nodeId: node.id,
+                label: node.data?.label || node.id,
+                status: "PENDING",
+            })),
         });
 
         // Trigger the engine asynchronously (Fire and Forget)

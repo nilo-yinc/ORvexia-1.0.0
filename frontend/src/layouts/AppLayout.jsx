@@ -16,20 +16,27 @@ import {
   Bell,
   LogOut,
   User,
-  Moon,
-  Sun,
+  Database,
+  FileText,
+  Bot,
   Terminal,
   Activity,
   Cpu,
-  Layers
+  Layers,
+  Layout,
+  RefreshCw,
+  Grid
 } from 'lucide-react';
 
 const menuItems = [
-  { icon: HomeIcon, label: 'SYSTEM_CORE', path: '/home' },
-  { icon: Workflow, label: 'ARCHITECTURES', path: '/workflows' },
-  { icon: Sparkles, label: 'LOGIC_ENGINE', path: '/ai-builder' },
-  { icon: BarChart3, label: 'TELEMETRY', path: '/analytics' },
-  { icon: FolderKanban, label: 'BLUEPRINTS', path: '/templates' },
+  { icon: HomeIcon, label: 'DASHBOARD', path: '/home' },
+  { icon: Workflow, label: 'WORKFLOWS', path: '/workflows' },
+  { icon: Database, label: 'DATA_TABLES', path: '/tables' },
+  { icon: Layout, label: 'INTERFACES', path: '/interfaces' },
+  { icon: RefreshCw, label: 'TRANSFER', path: '/transfer' },
+  { icon: Grid, label: 'APPS', path: '/apps' },
+  { icon: Bot, label: 'AI_AGENTS', path: '/agents' },
+  { icon: BarChart3, label: 'ACTIVITY', path: '/analytics' },
 ];
 
 const Logo = () => (

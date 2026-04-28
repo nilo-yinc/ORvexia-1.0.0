@@ -66,6 +66,7 @@ const registerUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar || null,
       },
     });
   } catch (error) {
@@ -190,7 +191,8 @@ const login = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        avatar: user.avatar || null,
       }
     });
   } catch (error) {
@@ -226,6 +228,7 @@ const getProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar || null,
         isVerified: user.isVerified,
         role: user.role,
       },
@@ -285,8 +288,21 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordTokenExpiry = Date.now() + 10 * 60 * 1000; // 10 mins
     await user.save();
 
-    // Send OTP via Webhook
-    EmailService.send(user.email, user.name, 'otp', { otp });
+    // Send OTP via Webhook. Password reset must not claim success if email fails.
+    const emailResult = await EmailService.send(user.email, user.name, 'otp', { otp });
+
+    if (!emailResult.ok) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordTokenExpiry = undefined;
+      await user.save();
+
+      return res.status(502).json({
+        status: false,
+        message: emailResult.skipped
+          ? "Email service is not configured"
+          : "Could not send OTP email. Please try again shortly.",
+      });
+    }
 
     return res.status(200).json({ status: true, message: "OTP sent to email" });
   } catch (error) {
@@ -340,7 +356,9 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ status: false, message: "User not found" });
 
     if (name) user.name = name;
-    if (avatar) user.avatar = avatar;
+    if (Object.prototype.hasOwnProperty.call(req.body, "avatar")) {
+      user.avatar = avatar || null;
+    }
 
     await user.save();
 

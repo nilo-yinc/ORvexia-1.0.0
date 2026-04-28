@@ -49,6 +49,8 @@ const InputField = ({ label, icon: Icon, type, name, value, onChange, placeholde
   </div>
 );
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export const Signup = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
@@ -211,13 +213,13 @@ export const Signup = () => {
             
             <div className="flex gap-4">
               <a 
-                href="http://localhost:3000/api/v1/auth/google"
+                href={`${API_BASE}/api/v1/auth/google`}
                 className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white"
               >
                 <GoogleIcon /> Google
               </a>
               <a 
-                href="http://localhost:3000/api/v1/auth/github"
+                href={`${API_BASE}/api/v1/auth/github`}
                 className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white"
               >
                 <Github className="w-4 h-4" /> GitHub

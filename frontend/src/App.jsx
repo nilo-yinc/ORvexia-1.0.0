@@ -11,6 +11,12 @@ import { AIBuilder } from './pages/AIBuilder';
 import { Analytics } from './pages/Analytics';
 import { Templates } from './pages/Templates';
 import { Settings } from './pages/Settings';
+import { Tables } from './pages/Tables';
+import { Forms } from './pages/Forms';
+import { Interfaces } from './pages/Interfaces';
+import { Transfer } from './pages/Transfer';
+import { Apps } from './pages/Apps';
+import { Agents } from './pages/Agents';
 import { AppLayout } from './layouts/AppLayout';
 import AuthCallback from './pages/AuthCallback';
 
@@ -80,6 +86,12 @@ function App() {
               <Route path="ai-builder" element={<AIBuilder />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="templates" element={<Templates />} />
+              <Route path="tables" element={<Tables />} />
+              <Route path="forms" element={<Forms />} />
+              <Route path="interfaces" element={<Interfaces />} />
+              <Route path="transfer" element={<Transfer />} />
+              <Route path="apps" element={<Apps />} />
+              <Route path="agents" element={<Agents />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 
