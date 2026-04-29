@@ -221,9 +221,9 @@ export const ConfigPanel = ({
                         ],
                         'GMAIL': [
                           { id: 'action', label: 'Action', type: 'select', options: [
+                            { value: 'read_latest', label: 'READ LATEST EMAIL' },
                             { value: 'send', label: 'SEND VIA MAIL ENGINE' },
                             { value: 'send_google', label: 'SEND VIA GMAIL API' },
-                            { value: 'read_latest', label: 'READ LATEST EMAIL' },
                             { value: 'auto_reply', label: 'AUTO REPLY TO LATEST' },
                           ] },
                           { id: 'query', label: 'Gmail Search Query', type: 'text', placeholder: 'is:unread newer_than:7d' },

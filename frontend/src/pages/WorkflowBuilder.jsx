@@ -1291,7 +1291,13 @@ export const WorkflowBuilder = () => {
     }
   };
 
-  const updateNode = (nodeId, newData) => { setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: newData } : n)); };
+  const updateNode = (nodeId, newData) => { 
+    setNodes((nds) => {
+      const next = nds.map((n) => n.id === nodeId ? { ...n, data: newData } : n);
+      saveHistory(next, edges);
+      return next;
+    }); 
+  };
   const deleteNode = (nodeId) => { const nn = nodes.filter((n) => n.id !== nodeId); const ne = edges.filter((e) => e.source !== nodeId && e.target !== nodeId); setNodes(nn); setEdges(ne); setSelectedNode(null); saveHistory(nn, ne); };
   const duplicateNode = (node) => { const nn = { ...node, id: `node_${nodeIdCounter}`, position: { x: node.position.x + 60, y: node.position.y + 60 } }; setNodeIdCounter((c) => c + 1); const newNodes = [...nodes, nn]; setNodes(newNodes); saveHistory(newNodes, edges); };
 
