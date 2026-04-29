@@ -43,6 +43,11 @@ export const workflowApi = {
     return response.data;
   },
 
+  getGlobalExecutions: async (limit = 5) => {
+    const response = await api.get(`/workflows/executions`, { params: { limit } });
+    return response.data;
+  },
+
   delete: async (id) => {
     const response = await api.delete(`/workflows/${id}`);
     return response.data;

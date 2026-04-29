@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { workflowApi } from '../lib/api';
 import {
   Workflow,
   Sparkles,
@@ -141,18 +142,10 @@ export const Home = () => {
   React.useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const [execRes, wfRes] = await Promise.all([
-          fetch('/api/workflows/executions?limit=5', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }),
-          fetch('/api/workflows', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          })
+        const [executions, workflows] = await Promise.all([
+          workflowApi.getGlobalExecutions(5),
+          workflowApi.getAll()
         ]);
-
-        const executions = await execRes.json();
-        const workflows = await wfRes.json();
 
         if (Array.isArray(executions)) {
           setRecentActivity(executions.map(ex => ({

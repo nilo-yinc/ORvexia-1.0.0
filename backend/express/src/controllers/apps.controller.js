@@ -95,9 +95,13 @@ exports.connectSlackOAuth = async (req, res) => {
     return res.redirect(`${clientUrl}${redirectPath}?slack_error=missing_oauth_config`);
   }
 
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const currentBaseUrl = `${protocol}://${host}`;
+
   const redirectPath = normalizeRedirectPath(req.query.redirect, "/apps");
   const state = jwt.sign(
-    { ownerId: req.user.id, redirectPath },
+    { ownerId: req.user.id, redirectPath, currentBaseUrl },
     process.env.JWT_SECRET,
     { expiresIn: "10m" }
   );
@@ -105,7 +109,7 @@ exports.connectSlackOAuth = async (req, res) => {
   const params = new URLSearchParams({
     client_id: process.env.SLACK_CLIENT_ID,
     scope: slackScopes,
-    redirect_uri: `${backendBaseUrl}/api/apps/slack/callback`,
+    redirect_uri: `${currentBaseUrl}/api/apps/slack/callback`,
     state,
   });
 
@@ -122,7 +126,8 @@ exports.handleSlackOAuthCallback = async (req, res) => {
 
     const decoded = jwt.verify(String(state), process.env.JWT_SECRET);
     const redirectPath = normalizeRedirectPath(decoded.redirectPath, "/apps");
-    const redirectUri = `${backendBaseUrl}/api/apps/slack/callback`;
+    const currentBaseUrl = decoded.currentBaseUrl || backendBaseUrl;
+    const redirectUri = `${currentBaseUrl}/api/apps/slack/callback`;
 
     const tokenResponse = await axios.post("https://slack.com/api/oauth.v2.access",
       new URLSearchParams({
@@ -165,9 +170,13 @@ exports.connectNotionOAuth = async (req, res) => {
     return res.redirect(`${clientUrl}${redirectPath}?notion_error=missing_oauth_config`);
   }
 
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const currentBaseUrl = `${protocol}://${host}`;
+
   const redirectPath = normalizeRedirectPath(req.query.redirect, "/apps");
   const state = jwt.sign(
-    { ownerId: req.user.id, redirectPath },
+    { ownerId: req.user.id, redirectPath, currentBaseUrl },
     process.env.JWT_SECRET,
     { expiresIn: "10m" }
   );
@@ -176,7 +185,7 @@ exports.connectNotionOAuth = async (req, res) => {
     client_id: process.env.NOTION_CLIENT_ID,
     response_type: "code",
     owner: "user",
-    redirect_uri: `${oauthBaseUrl}/api/apps/notion/callback`,
+    redirect_uri: `${currentBaseUrl}/api/apps/notion/callback`,
     state,
   });
 
@@ -194,7 +203,8 @@ exports.handleNotionOAuthCallback = async (req, res) => {
 
     const decoded = jwt.verify(String(state), process.env.JWT_SECRET);
     const redirectPath = normalizeRedirectPath(decoded.redirectPath, "/apps");
-    const redirectUri = `${oauthBaseUrl}/api/apps/notion/callback`;
+    const currentBaseUrl = decoded.currentBaseUrl || oauthBaseUrl;
+    const redirectUri = `${currentBaseUrl}/api/apps/notion/callback`;
     const basic = Buffer.from(`${process.env.NOTION_CLIENT_ID}:${process.env.NOTION_CLIENT_SECRET}`).toString("base64");
 
     const tokenResponse = await axios.post("https://api.notion.com/v1/oauth/token", {
@@ -234,9 +244,13 @@ exports.connectGitHubOAuth = async (req, res) => {
     return res.redirect(`${clientUrl}${redirectPath}?github_error=missing_oauth_config`);
   }
 
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const currentBaseUrl = `${protocol}://${host}`;
+
   const redirectPath = normalizeRedirectPath(req.query.redirect, "/apps");
   const state = jwt.sign(
-    { ownerId: req.user.id, redirectPath },
+    { ownerId: req.user.id, redirectPath, currentBaseUrl },
     process.env.JWT_SECRET,
     { expiresIn: "10m" }
   );
@@ -244,7 +258,7 @@ exports.connectGitHubOAuth = async (req, res) => {
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
     scope: githubScopes,
-    redirect_uri: `${oauthBaseUrl}/api/apps/github/callback`,
+    redirect_uri: `${currentBaseUrl}/api/apps/github/callback`,
     state,
   });
 
@@ -261,7 +275,8 @@ exports.handleGitHubOAuthCallback = async (req, res) => {
 
     const decoded = jwt.verify(String(state), process.env.JWT_SECRET);
     const redirectPath = normalizeRedirectPath(decoded.redirectPath, "/apps");
-    const redirectUri = `${oauthBaseUrl}/api/apps/github/callback`;
+    const currentBaseUrl = decoded.currentBaseUrl || oauthBaseUrl;
+    const redirectUri = `${currentBaseUrl}/api/apps/github/callback`;
 
     const tokenResponse = await axios.post(
       "https://github.com/login/oauth/access_token",

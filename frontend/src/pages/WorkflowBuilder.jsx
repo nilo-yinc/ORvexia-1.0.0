@@ -8,7 +8,7 @@ import "reactflow/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 import {
-  Play, Save, ArrowLeft, Settings as SettingsIcon, Undo2, Redo2,
+  Play, Pause, Save, ArrowLeft, Settings as SettingsIcon, Undo2, Redo2,
   Plus, X, Search, ZoomIn, ZoomOut, Maximize2, ChevronUp, Bot, Send,
   Sparkles, PanelLeftClose, PanelLeftOpen, Loader2, Command,
   Globe, Zap, GitBranch, Clock, Code, Repeat, Box, Database, FileCode,
@@ -104,6 +104,7 @@ const NOTION_OAUTH_KEYS = new Set(["notion"]);
 const AUTH_RESUME_STORAGE_KEY = "orvexia_auth_resume_queue";
 const COPILOT_MESSAGES_PREFIX = "orvexia_copilot_messages";
 const COPILOT_WIDTH_STORAGE_KEY = "orvexia_copilot_width";
+const WORKFLOW_DRAFT_PREFIX = "orvexia_workflow_draft";
 const TRIAGE_NODE_TYPES = new Set(["ai agent", "ai request", "create with ai", "filter", "condition", "formatter", "evaluate", "path", "delay"]);
 const ARCHIVE_NODE_TYPES = new Set(["notion", "google docs", "google drive", "database query", "output"]);
 
@@ -286,7 +287,7 @@ const autoHealGraphConnectivity = (nodes = [], edges = []) => {
 };
 
 // --- INNER CANVAS ---
-const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, undo, redo, historyIndex, history, onRun, setShowCmdK }) => {
+const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, undo, redo, historyIndex, history, onRun, setShowCmdK, isWorkflowActive, onToggleActive, hasId }) => {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   return (
     <>
@@ -334,6 +335,18 @@ const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, on
             <Command className="w-3 h-3" /> COMMAND_SEARCH
           </button>
           
+          <div className="w-[1px] h-4 bg-white/[0.05] mx-2" />
+
+          {hasId && (
+            <button 
+              onClick={onToggleActive} 
+              className={`flex items-center gap-2 px-4 py-2 border ${isWorkflowActive ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' : 'border-white/10 bg-white/5 text-white/40'} text-[10px] font-black uppercase tracking-widest transition-all`}
+            >
+              {isWorkflowActive ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
+              {isWorkflowActive ? (isWorkflowActive ? 'Active' : 'Paused') : 'Paused'}
+            </button>
+          )}
+
           <button onClick={onRun} className="flex items-center gap-2 px-6 py-2 bg-accent hover:bg-accent-dim text-white text-[10px] font-black uppercase tracking-widest transition-all ml-1">
             <Play className="w-3 h-3 fill-current" /> Execute_Flow
           </button>
@@ -359,6 +372,7 @@ export const WorkflowBuilder = () => {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [nodeIdCounter, setNodeIdCounter] = useState(1);
   const [triggerSlug, setTriggerSlug] = useState(null);
+  const [isWorkflowActive, setIsWorkflowActive] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState([]);
@@ -386,6 +400,7 @@ export const WorkflowBuilder = () => {
   const mainRef = useRef(null);
   const conversationSaveTimerRef = useRef(null);
   const activeMessageStorageKey = `${COPILOT_MESSAGES_PREFIX}_${id || "draft"}`;
+  const activeDraftStorageKey = `${WORKFLOW_DRAFT_PREFIX}_${id || "draft"}`;
 
   useEffect(() => {
     const persisted = localStorage.getItem(activeMessageStorageKey);
@@ -465,6 +480,15 @@ export const WorkflowBuilder = () => {
     };
   }, [id, messages, conversationLoaded]);
 
+  // Sync nodes/edges to local storage draft
+  useEffect(() => {
+    if (nodes.length === 0 && edges.length === 0) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(activeDraftStorageKey, JSON.stringify({ nodes, edges, triggerSlug, workflowName }));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [activeDraftStorageKey, nodes, edges, triggerSlug, workflowName]);
+
   useEffect(() => {
     if (!isResizingCopilot) return;
     const onMove = (event) => {
@@ -487,7 +511,7 @@ export const WorkflowBuilder = () => {
   const classifyStage = useCallback((action) => {
     const nodeType = String(action?.nodeType || "").toLowerCase();
     const role = String(action?.role || "").toLowerCase();
-    if (role === "trigger" || nodeType === "start" || nodeType === "webhook" || nodeType === "gmail") return "TRIGGER";
+    if (role === "trigger" || nodeType === "start" || nodeType === "webhook") return "TRIGGER";
     if (TRIAGE_NODE_TYPES.has(nodeType)) return "TRIAGE";
     if (ARCHIVE_NODE_TYPES.has(nodeType)) return "ARCHIVE";
     return "ACTION";
@@ -546,13 +570,49 @@ export const WorkflowBuilder = () => {
         if (data) {
           setWorkflowName(data.name.toUpperCase());
           setTriggerSlug(data.triggerSlug);
-          const cleaned = stripStartNodesFromGraph(Array.isArray(data.nodes) ? data.nodes : [], Array.isArray(data.edges) ? data.edges : []);
-          if (data.nodes) setNodes(cleaned.nodes);
-          if (data.edges) setEdges(cleaned.edges);
+          setIsWorkflowActive(!!data.is_active);
+          
+          const dbNodes = Array.isArray(data.nodes) ? data.nodes : [];
+          const dbEdges = Array.isArray(data.edges) ? data.edges : [];
+
+          if (dbNodes.length === 0) {
+            // Check for local draft if DB is empty (common after OAuth redirect for new workflow)
+            const draft = localStorage.getItem(activeDraftStorageKey) || localStorage.getItem(`${WORKFLOW_DRAFT_PREFIX}_draft`);
+            if (draft) {
+              try {
+                const parsed = JSON.parse(draft);
+                if (Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
+                  setNodes(parsed.nodes);
+                  setEdges(parsed.edges || []);
+                  if (parsed.workflowName) setWorkflowName(parsed.workflowName);
+                  if (parsed.triggerSlug) setTriggerSlug(parsed.triggerSlug);
+                  return;
+                }
+              } catch (e) {}
+            }
+          }
+
+          const cleaned = stripStartNodesFromGraph(dbNodes, dbEdges);
+          const laidOut = layoutWorkflowNodes(cleaned.nodes, cleaned.edges);
+          setNodes(laidOut);
+          setEdges(cleaned.edges);
         }
       }).catch(console.error).finally(() => setIsLoading(false));
+    } else {
+      // Check for 'draft' when no ID
+      const draft = localStorage.getItem(`${WORKFLOW_DRAFT_PREFIX}_draft`);
+      if (draft) {
+        try {
+          const parsed = JSON.parse(draft);
+          if (Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
+            setNodes(parsed.nodes);
+            setEdges(parsed.edges || []);
+            if (parsed.workflowName) setWorkflowName(parsed.workflowName);
+          }
+        } catch (e) {}
+      }
     }
-  }, [id, setNodes, setEdges]);
+  }, [id, activeDraftStorageKey, setNodes, setEdges]);
 
   const loadAppDirectory = useCallback(async () => {
     try {
@@ -626,10 +686,22 @@ export const WorkflowBuilder = () => {
     setIsSaving(true);
     try {
       const result = await workflowApi.create({ name: workflowName, nodes, edges, triggerSlug });
-      if (result?.triggerSlug) { setTriggerSlug(result.triggerSlug); if (!id && result.workflowId) navigate(`/workflows/builder/${result.workflowId}`, { replace: true }); }
+      if (result?.triggerSlug) { 
+        setTriggerSlug(result.triggerSlug); 
+        if (!id && result.workflowId) {
+          // Migrate local draft to new ID key
+          const draft = localStorage.getItem(`${WORKFLOW_DRAFT_PREFIX}_draft`);
+          if (draft) localStorage.setItem(`${WORKFLOW_DRAFT_PREFIX}_${result.workflowId}`, draft);
+          
+          const chatDraft = localStorage.getItem(`${COPILOT_MESSAGES_PREFIX}_draft`);
+          if (chatDraft) localStorage.setItem(`${COPILOT_MESSAGES_PREFIX}_${result.workflowId}`, chatDraft);
+
+          navigate(`/workflows/builder/${result.workflowId}`, { replace: true }); 
+        }
+      }
     } catch (e) { console.error(e); } finally { setIsSaving(false); }
   };
-
+  
   const handleRun = async () => {
     if (!triggerSlug) { alert("SAVE_PROTOCOL_REQUIRED: Save workflow to execute."); return; }
     setLogs((prev) => [...prev, { id: Date.now(), timestamp: new Date().toISOString().split('T')[1].split('.')[0], severity: 'info', node: 'SYS', message: 'EXECUTION_INITIATED...' }]);
@@ -652,6 +724,27 @@ export const WorkflowBuilder = () => {
         node: 'SYS',
         message: e.message || 'EXECUTION_FAILED_TO_START',
       }]);
+    }
+  };
+
+  const handleToggleActive = async (forcedStatus) => {
+    if (!id) return;
+    try {
+      const newStatus = typeof forcedStatus === 'boolean' ? forcedStatus : !isWorkflowActive;
+      if (typeof forcedStatus === 'boolean' && newStatus === isWorkflowActive) return;
+      
+      await workflowApi.toggle(id, newStatus);
+      setIsWorkflowActive(newStatus);
+      const ts = new Date().toISOString().split('T')[1].split('.')[0];
+      setLogs((prev) => [...prev, {
+        id: Date.now(),
+        timestamp: ts,
+        severity: newStatus ? 'success' : 'warn',
+        node: 'SYS',
+        message: newStatus ? 'PROTOCOL_ACTIVATED: Workflow is now live.' : 'PROTOCOL_PAUSED: Workflow triggers disabled.',
+      }]);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -911,6 +1004,13 @@ export const WorkflowBuilder = () => {
             }));
             setMessages((prev) => [...prev, ...stageMessages]);
           }
+
+          // Process TOGGLE_ACTIVE actions
+          result.actions
+            .filter((a) => a.type === 'TOGGLE_ACTIVE')
+            .forEach((action) => {
+              handleToggleActive(action.isActive);
+            });
 
           // Process REMOVE_NODE actions first so planner can enforce strict app scope.
           result.actions
@@ -1235,7 +1335,18 @@ export const WorkflowBuilder = () => {
                 </div>
               ) : (
                 <ReactFlowProvider>
-                  <CanvasInner nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={onNodeClick} undo={undo} redo={redo} historyIndex={historyIndex} history={history} onRun={handleRun} setShowCmdK={setShowCmdK} />
+                  <CanvasInner 
+                    nodes={nodes} edges={edges} 
+                    onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} 
+                    onConnect={onConnect} onNodeClick={onNodeClick} 
+                    undo={undo} redo={redo} 
+                    historyIndex={historyIndex} history={history} 
+                    onRun={handleRun} 
+                    setShowCmdK={setShowCmdK}
+                    isWorkflowActive={isWorkflowActive}
+                    onToggleActive={handleToggleActive}
+                    hasId={!!id}
+                  />
                 </ReactFlowProvider>
               )}
             </div>

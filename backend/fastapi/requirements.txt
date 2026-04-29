@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-pymongo
-python-dotenv
-langgraph
-langchain
-langchain-groq
-langchain-core
-langchain-community

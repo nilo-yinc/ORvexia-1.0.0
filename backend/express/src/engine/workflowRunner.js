@@ -61,16 +61,23 @@ const resolveTemplate = (value, context) => {
   if (typeof value !== "string") return value;
 
   return value.replace(/\{\{\s*([\w-]+)(?:\.([\w.[\]-]+))?\s*\}\}/g, (match, nodeId, path) => {
-    let source = nodeId === "trigger" || nodeId === "node_0"
+    // Priority 1: Specific node or trigger
+    let source = (nodeId === "trigger" || nodeId === "node_0")
       ? context.trigger
       : context.steps[nodeId];
 
-    // Support direct placeholders like {{slack_event.text}} from trigger payload
-    if (!source && path && context.trigger && Object.prototype.hasOwnProperty.call(context.trigger, nodeId)) {
-      source = context.trigger[nodeId];
+    let resolved = path ? getValueByPath(source, path) : source;
+
+    // Priority 2: Fallback to global current context (merged outputs)
+    if (resolved === undefined || resolved === null) {
+      resolved = path ? getValueByPath(context.current, path) : context.current[nodeId];
     }
 
-    const resolved = path ? getValueByPath(source, path) : source;
+    // Priority 3: Deep search for the key anywhere in current context
+    if (resolved === undefined || resolved === null && path) {
+      resolved = getValueByPath(context.current, path);
+    }
+
     if (resolved === undefined || resolved === null) return match;
     return typeof resolved === "object" ? JSON.stringify(resolved) : String(resolved);
   });
@@ -395,7 +402,7 @@ Return a concise result that downstream Gmail, Docs, or Slack steps can map with
   } else if (messageText.includes("schedule") || messageText.includes("meeting") || messageText.includes("calendar")) {
     response = "📅 I can help with scheduling! Set up a Google Calendar workflow in the ORvexia dashboard and I'll automatically create events, check availability, and send meeting links.";
   } else {
-    response = "👋 Thanks for your message! I'm ORvexia, your AI assistant. I received: \"" + String(context.current?.Message_Text || context.current?.text || "").substring(0, 100) + "\"\n\nI'm currently running in offline mode (AI API is recharging). I'll have full AI capabilities back shortly. In the meantime, try asking me to 'introduce yourself' or 'what can you do'!";
+    response = "👋 Thanks for your message! I'm ORvexia, your AI assistant. I received: \"" + String(context.current?.Message_Text || context.current?.text || "").substring(0, 100) + "\"\n\nI'm currently processing this request using my localized protocol while the primary AI neural link recharges. I will be back at full capacity shortly. In the meantime, try asking me to 'introduce yourself' or 'what can you do'!";
   }
   
   return {
@@ -502,12 +509,17 @@ const runAction = async (node, config, context, workflow) => {
       });
 
       if (!response.data?.ok) {
-        throw new Error(`Slack API error: ${response.data?.error || "message_post_failed"}`);
+        const error = response.data?.error || "message_post_failed";
+        if (error === 'channel_not_found') {
+          throw new Error(`Slack API error: channel_not_found. The ORvexia app might not be invited to the channel "${targetChannel}". Please invite the bot to this channel first.`);
+        }
+        throw new Error(`Slack API error: ${error}`);
       }
 
       return {
         Message_TS: response.data.ts || new Date().toISOString(),
         Channel: response.data.channel || targetChannel,
+        sent_text: messageText,
       };
     }
 
@@ -558,7 +570,13 @@ const runAction = async (node, config, context, workflow) => {
         "Content-Type": "application/json",
       },
     });
-    return { Page_ID: response.data.id, URL: response.data.url, Created_Time: response.data.created_time };
+    return { 
+      Page_ID: response.data.id, 
+      URL: response.data.url, 
+      Created_Time: response.data.created_time,
+      sent_title: config.page_title,
+      sent_content: config.content
+    };
   }
 
   if (label === "google calendar" || label === "google meet") {
@@ -867,6 +885,16 @@ const runWorkflow = async (nodes, edges, execution, io) => {
       const output = await executeNode(currentNode, context, workflow);
       context.steps[currentNode.id] = output;
       context.current = { ...context.current, ...output };
+      
+      const fs = require('fs');
+      const logMsg = `[${new Date().toISOString()}] Node ${currentNode.id} finished. Output: ${JSON.stringify(output)}\n`;
+      fs.appendFileSync('scratch/exec_debug.log', logMsg);
+
+      // Merge node outputs into trigger context so {{trigger.XXX}} always works
+      if (output && typeof output === 'object') {
+        context.trigger = { ...context.trigger, ...output };
+        fs.appendFileSync('scratch/exec_debug.log', `[DEBUG] Updated context.trigger: ${JSON.stringify(context.trigger)}\n`);
+      }
 
       const kind = getNodeKind(currentNode);
       if (kind === "trigger" && output.triggered === false) {

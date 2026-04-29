@@ -49,34 +49,47 @@ const normalizeRedirectPath = (value) => {
 // Initiate Google Login
 router.get('/google', (req, res, next) => {
   const redirectPath = normalizeRedirectPath(req.query.redirect);
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const callbackURL = `${protocol}://${host}/api/v1/auth/google/callback`;
+  
+  console.log(`[GoogleOAuth] Initiating login. Host: ${host}, Protocol: ${protocol}, Callback: ${callbackURL}`);
+
   passport.authenticate('google', {
     scope: googleScopes,
     accessType: 'offline',
     prompt: 'consent',
     state: redirectPath ? encodeURIComponent(redirectPath) : undefined,
+    callbackURL
   })(req, res, next);
 });
 
 // Google Callback
-router.get('/google/callback', 
-  passport.authenticate('google', { failureRedirect: `${clientUrl}/login?error=auth_failed` }),
-  function(req, res) {
-    // Generate JWT for the OAuth user
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRY || '24h',
-    });
-    
-    // Send security alert email
-    EmailService.send(req.user.email, req.user.name, 'security', { 
-      ip: req.ip || 'Unknown', 
-      method: 'Google OAuth' 
-    });
-    
-    const redirectPath = normalizeRedirectPath(req.query.state ? decodeURIComponent(req.query.state) : "");
-    const redirectQuery = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : "";
-    res.redirect(`${clientUrl}/auth-callback?token=${token}${redirectQuery}`);
-  }
-);
+router.get('/google/callback', (req, res, next) => {
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const callbackURL = `${protocol}://${host}/api/v1/auth/google/callback`;
+
+  passport.authenticate('google', { 
+    callbackURL,
+    failureRedirect: `${clientUrl}/login?error=auth_failed` 
+  })(req, res, next);
+}, function(req, res) {
+  // Generate JWT for the OAuth user
+  const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY || '24h',
+  });
+  
+  // Send security alert email
+  EmailService.send(req.user.email, req.user.name, 'security', { 
+    ip: req.ip || 'Unknown', 
+    method: 'Google OAuth' 
+  });
+  
+  const redirectPath = normalizeRedirectPath(req.query.state ? decodeURIComponent(req.query.state) : "");
+  const redirectQuery = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : "";
+  res.redirect(`${clientUrl}/auth-callback?token=${token}${redirectQuery}`);
+});
 
 // Get current user session (works for both session-based and JWT)
 router.get('/me', (req, res) => {

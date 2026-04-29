@@ -185,7 +185,10 @@ const APP_NODE_LABELS = new Set(APP_NAMES_LOWER);
 const DECISION_TAKEOVER_REGEX = /(you decide|as needed|take all|take whatever|best way|you choose|handle everything)/i;
 const CONNECTION_FIX_REGEX = /(connect|link|wire|join|fix).*?(node|flow|workflow)|connect.*properly|node.*not.*connect|repair.*connection/i;
 const AUTO_REPLY_REGEX = /(auto[\s-]?reply|reply\s+automatically|gmail\s+reply|mail\s+reply)/i;
+const CONTEXT_REFERENCE_REGEX = /(all\s+(?:these|those)?\s*(?:two|three|apps|services|tools|them)|all of them|these apps|those apps|this workflow|that workflow|use them all|take suitable example|suitable example|test all)/i;
 const NEGATIVE_APP_REGEX = /(?:don'?t want|do not want|without|remove|exclude|not)\s+(gmail|slack|github|notion|google drive|google docs|google meet|google calendar|google keep|discord|hubspot|stripe|typeform|calendly|cal\.com)/gi;
+const TOGGLE_ACTIVE_REGEX = /\b(pause|stop|deactivate|disable|halt|suspend)\b/i;
+const TOGGLE_RESUME_REGEX = /\b(activate|resume|enable|live|start)\b/i;
 
 const normalizeNodeType = (value = "") => String(value).trim().toLowerCase();
 const sortNodesForFlow = (nodes = []) =>
@@ -229,6 +232,11 @@ const getDetectedAppsFromText = (text = "") => {
   return [...new Set(detected)];
 };
 
+const mergeDetectedApps = (...groups) => {
+  const merged = groups.flat().filter(Boolean).map((item) => String(item).trim()).filter(Boolean);
+  return [...new Set(merged)];
+};
+
 const getExcludedAppsFromText = (text = "") => {
   const normalized = normalizeTypos(text);
   const excluded = [];
@@ -247,6 +255,98 @@ const extractOnlyAppConstraint = (prompt = "") => {
   const hasOnlyMode = /\bonly\b|\bjust\b|\bno more\b|\bonly this\b/.test(lower);
   if (!hasOnlyMode) return [];
   return getDetectedAppsFromText(prompt);
+};
+
+const buildDefaultConfigForApp = (appName, role = "action", index = 0) => {
+  const app = normalizeNodeType(appName);
+  const isTrigger = normalizeNodeType(role) === "trigger";
+
+  if (app === "gmail") {
+    return isTrigger
+      ? { action: "new_email", query: "is:unread newer_than:1d" }
+      : { action: "auto_reply", subject: "Re: {{trigger.Subject}}", body: "Thanks for your email. We received your message and will reply shortly." };
+  }
+
+  if (app === "slack") {
+    return isTrigger
+      ? { action: "new_message", channel: "#general" }
+      : { action: "send_message", channel: "#general", message: "📧 {{trigger.Subject}}\n{{trigger.Snippet}}" };
+  }
+
+  if (app === "notion") {
+    return {
+      action: "create_page",
+      database: "Inbox",
+      page_title: "{{trigger.Subject}}",
+      content: "{{trigger.Snippet}}",
+    };
+  }
+
+  if (app === "google drive") {
+    return isTrigger ? { action: "new_file" } : { action: "upload_file", folder: "/Automation Files" };
+  }
+
+  if (app === "google docs") {
+    return { action: "create_document", title: "Automation Output", content: "{{trigger.Snippet}}" };
+  }
+
+  if (app === "google calendar") {
+    return isTrigger ? { action: "new_event" } : { action: "create_event", title: "Follow up: {{trigger.Subject}}" };
+  }
+
+  if (app === "google meet") {
+    return isTrigger ? { action: "meeting_started" } : { action: "create_meeting", title: "Meet: {{trigger.Subject}}" };
+  }
+
+  if (app === "google keep") {
+    return { action: "create_note", title: "{{trigger.Subject}}", content: "{{trigger.Snippet}}" };
+  }
+
+  return isTrigger ? { event: "new_event" } : { event: index === 0 ? "primary_action" : "followup_action" };
+};
+
+const buildLinearMultiAppActions = (apps = [], nextId = 1) => {
+  const normalizedApps = [...new Set(apps.map((app) => String(app).trim()).filter(Boolean))];
+  if (normalizedApps.length === 0) {
+    return { actions: [], nodeOrder: [] };
+  }
+
+  const triggerPriority = ["gmail", "slack", "github", "webhook", "google calendar", "google drive", "notion"];
+  const triggerApp =
+    normalizedApps.find((app) => triggerPriority.includes(normalizeNodeType(app))) ||
+    normalizedApps[0];
+  const actionApps = normalizedApps.filter((app) => app !== triggerApp);
+  const orderedApps = [triggerApp, ...actionApps];
+
+  const actions = [];
+  const nodeOrder = [];
+  let currentId = nextId;
+
+  orderedApps.forEach((appName, index) => {
+    const nodeId = `node_${currentId++}`;
+    const role = index === 0 ? "trigger" : "action";
+    const lower = normalizeNodeType(appName);
+    actions.push({
+      type: "ADD_NODE",
+      nodeType: appName,
+      nodeId,
+      role,
+      config: buildDefaultConfigForApp(appName, role, index),
+      requiresAuth: APP_NODE_LABELS.has(lower),
+      authType: APP_NODE_LABELS.has(lower) ? "oauth2" : "",
+    });
+    nodeOrder.push(nodeId);
+  });
+
+  for (let index = 0; index < nodeOrder.length - 1; index += 1) {
+    actions.push({
+      type: "CONNECT_NODES",
+      source: nodeOrder[index],
+      target: nodeOrder[index + 1],
+    });
+  }
+
+  return { actions, nodeOrder, orderedApps };
 };
 
 const buildOnlyAppsPlan = (allowedApps = [], currentNodes = [], currentEdges = []) => {
@@ -305,69 +405,23 @@ const buildOnlyAppsPlan = (allowedApps = [], currentNodes = [], currentEdges = [
     return { id, created: true };
   };
 
-  const addActions = [];
-  const connectActions = [];
-
   if (allowedApps.length >= 2) {
-    const normalizedAllowed = allowedApps.map((app) => normalizeNodeType(app));
-    const hasGmail = normalizedAllowed.includes("gmail");
-    const hasSlack = normalizedAllowed.includes("slack");
-    const triggerApp = hasGmail
-      ? allowedApps.find((app) => normalizeNodeType(app) === "gmail")
-      : allowedApps.find((app) => /webhook|calendar|slack/i.test(app.toLowerCase())) || allowedApps[0];
-    const actionApp = hasSlack && normalizeNodeType(triggerApp) !== "slack"
-      ? allowedApps.find((app) => normalizeNodeType(app) === "slack")
-      : allowedApps.find((app) => app !== triggerApp) || allowedApps[1];
-
-    const triggerNode = pickOrCreate(triggerApp, "trigger");
-    const actionNode = pickOrCreate(actionApp, "action");
-    if (triggerNode.created) {
-      addActions.push({
-        type: "ADD_NODE",
-        nodeType: triggerApp,
-        nodeId: triggerNode.id,
-        role: "trigger",
-        config: triggerApp.toLowerCase() === "gmail" ? { action: "read_latest", query: "is:unread newer_than:1d" } : { event: "new_message" },
-        requiresAuth: true,
-        authType: "oauth2",
-      });
-    }
-    if (actionNode.created) {
-      addActions.push({
-        type: "ADD_NODE",
-        nodeType: actionApp,
-        nodeId: actionNode.id,
-        role: "action",
-        config: actionApp.toLowerCase() === "slack"
-          ? { message: "📧 {{trigger.Subject}}\\n{{trigger.Snippet}}" }
-          : actionApp.toLowerCase() === "gmail"
-            ? { action: "auto_reply", body: "Thanks for your message. We will reply shortly." }
-            : { event: "action" },
-        requiresAuth: true,
-        authType: "oauth2",
-      });
-    }
-    // Remove extra duplicates of allowed apps except the chosen trigger/action nodes.
+    // Strict multi-app mode should preserve the user's full app scope, not collapse it
+    // down to a single trigger/action pair.
     keepNodes.forEach((node) => {
-      const app = normalizeNodeType(node?.data?.label || node?.data?.app);
-      if (!allowedSet.has(app)) return;
-      if (node.id === triggerNode.id || node.id === actionNode.id) return;
-      removeIdSet.add(node.id);
+      if (!isStartNode(node)) removeIdSet.add(node.id);
     });
 
-    if (triggerNode.id !== actionNode.id) {
-      connectActions.push({ type: "CONNECT_NODES", source: triggerNode.id, target: actionNode.id });
-    }
-
     const removeActions = [...removeIdSet].map((nodeId) => ({ type: "REMOVE_NODE", nodeId }));
-    const actions = [...removeActions, ...addActions, ...connectActions];
+    const linearPlan = buildLinearMultiAppActions(allowedApps, nextId);
+    const actions = [...removeActions, ...linearPlan.actions];
     return {
-      message: `Done. I enforced ONLY ${allowedApps.join(" + ")} in this workflow and rebuilt a clean automation path.`,
+      message: `Done. I rebuilt a strict ${allowedApps.join(" + ")} automation path with all requested apps included.`,
       needsClarification: false,
       followUpQuestions: [],
-      assumptions: ["Applied strict app scope from your latest instruction."],
+      assumptions: ["Applied strict app scope from your latest instruction.", "Used the first suitable app as trigger and chained the remaining requested apps as actions."],
       actions,
-      flowDefinition: buildFreshDefinitionFromActions(actions, keepNodes),
+      flowDefinition: buildFreshDefinitionFromActions(actions, []),
     };
   }
 
@@ -764,15 +818,28 @@ const attachBuildGuidance = (result) => {
 
 const buildClarificationResponse = (prompt, detectedApps = []) => {
   const appText = detectedApps.length ? ` I detected: ${detectedApps.join(", ")}.` : "";
+  const delegated = DECISION_TAKEOVER_REGEX.test(String(prompt || ""));
   const followUpQuestions = [];
 
-  if (detectedApps.length < 2) {
+  if (!delegated && detectedApps.length < 2) {
     followUpQuestions.push("Which app should be the trigger source?");
     followUpQuestions.push("Which app should receive the final action?");
   }
 
-  followUpQuestions.push("What exact output should happen (for example: send message, create doc, auto-reply, schedule meet)?");
-  followUpQuestions.push("Should this run instantly on every event or only when a filter condition is matched?");
+  if (!delegated) {
+    followUpQuestions.push("What exact output should happen (for example: send message, create doc, auto-reply, schedule meet)?");
+    followUpQuestions.push("Should this run instantly on every event or only when a filter condition is matched?");
+  }
+
+  if (delegated && detectedApps.length > 0) {
+    return {
+      needsClarification: false,
+      message: `I understand the request and will proceed with a practical default workflow.${appText}`,
+      followUpQuestions: [],
+      assumptions: ["Proceeding with autonomous defaults because you asked me to choose suitable examples."],
+      actions: [],
+    };
+  }
 
   return {
     needsClarification: true,
@@ -862,7 +929,10 @@ function matchTemplate(prompt, nextId, historyText = "") {
   const lower = combined.toLowerCase();
   const promptLower = String(prompt || "").toLowerCase();
   const promptApps = getDetectedAppsFromText(prompt);
+  const historyApps = getDetectedAppsFromText(historyText);
+  const combinedApps = mergeDetectedApps(promptApps, historyApps);
   const excludedApps = getExcludedAppsFromText(prompt);
+  const referencesPriorApps = CONTEXT_REFERENCE_REGEX.test(promptLower);
   // Strong single-intent guard: if user explicitly asks Gmail auto-reply and does not mention Slack,
   // never drift to cross-app templates from history context.
   if (promptApps.length === 1 && String(promptApps[0]).toLowerCase() === "gmail" && AUTO_REPLY_REGEX.test(promptLower)) {
@@ -871,11 +941,26 @@ function matchTemplate(prompt, nextId, historyText = "") {
   const onlyApps = extractOnlyAppConstraint(prompt);
   const onlyAppsLower = onlyApps.map((a) => a.toLowerCase());
   const excludedAppsLower = excludedApps.map((a) => a.toLowerCase());
+  if (combinedApps.length >= 3 && (promptApps.length >= 3 || referencesPriorApps || ACTION_INTENT_REGEX.test(lower) || DECISION_TAKEOVER_REGEX.test(promptLower))) {
+    const linearPlan = buildLinearMultiAppActions(combinedApps, nextId);
+    return attachBuildGuidance({
+      message: `I've built your ${linearPlan.orderedApps.join(" -> ")} automation workflow and included all requested apps.`,
+      needsClarification: false,
+      followUpQuestions: [],
+      assumptions: [promptApps.length >= 3 ? "Included every app explicitly mentioned in your prompt." : "Included every app referenced in this conversation context."],
+      actions: linearPlan.actions,
+    });
+  }
   const priorityText = promptApps.length > 0 ? promptLower : lower;
   let bestMatch = null;
   let bestScore = 0;
 
+  const shouldSkipNarrowTemplates =
+    combinedApps.length >= 3 &&
+    (referencesPriorApps || promptApps.length >= 3 || ACTION_INTENT_REGEX.test(lower) || DECISION_TAKEOVER_REGEX.test(promptLower));
+
   for (const [key, template] of Object.entries(WORKFLOW_TEMPLATES)) {
+    if (shouldSkipNarrowTemplates && key !== "gmail_ops_suite") continue;
     const score = template.keywords.filter((kw) => priorityText.includes(kw)).length;
     const templateApps = APP_NAMES.filter((app) => template.keywords.includes(app.toLowerCase())).map((a) => a.toLowerCase());
     const containsDisallowedApp = onlyApps.length > 0 && templateApps.some((app) => !onlyAppsLower.includes(app));
@@ -892,24 +977,21 @@ function matchTemplate(prompt, nextId, historyText = "") {
   }
 
   // Generic single-node fallback: try to detect an app name
-  const detectedAppsRaw = promptApps.length > 0 ? promptApps : APP_NAMES.filter(app => lower.includes(app.toLowerCase()));
+  const detectedAppsRaw = combinedApps.length > 0 ? combinedApps : APP_NAMES.filter(app => lower.includes(app.toLowerCase()));
   const detectedApps = detectedAppsRaw.filter((app) => !excludedAppsLower.includes(app.toLowerCase()));
   const hasActionIntent = ACTION_INTENT_REGEX.test(prompt) || ACTION_INTENT_REGEX.test(historyText);
   const userDelegatedDecision = DECISION_TAKEOVER_REGEX.test(promptLower);
   
   if (detectedApps.length >= 2) {
-    const source = detectedApps.find((name) => /gmail|slack|webhook|calendar/i.test(name)) || detectedApps[0];
-    const target = detectedApps.find((name) => name !== source) || detectedApps[1];
+    const linearPlan = buildLinearMultiAppActions(detectedApps, nextId);
+    const orderedApps = linearPlan.orderedApps || detectedApps;
+    const source = orderedApps[0];
     return attachBuildGuidance({
-      message: `I've connected ${source} -> ${target} for your automation workflow.`,
-      assumptions: userDelegatedDecision
+      message: `I've built your ${orderedApps.join(" -> ")} automation workflow.`,
+      assumptions: userDelegatedDecision || referencesPriorApps
         ? [`Using ${source} as trigger source based on your instruction to proceed autonomously.`]
         : [],
-      actions: [
-        { type: 'ADD_NODE', nodeType: source, nodeId: `node_${nextId}`, role: 'trigger', config: { event: 'trigger' }, requiresAuth: true, authType: 'oauth2' },
-        { type: 'ADD_NODE', nodeType: target, nodeId: `node_${nextId + 1}`, role: 'action', config: { event: 'action' }, requiresAuth: true, authType: 'oauth2' },
-        { type: 'CONNECT_NODES', source: `node_${nextId}`, target: `node_${nextId + 1}` },
-      ]
+      actions: linearPlan.actions
     });
   }
   
@@ -994,6 +1076,33 @@ exports.architect = async (req, res) => {
       }
     }
 
+    if (TOGGLE_ACTIVE_REGEX.test(promptLower) || TOGGLE_RESUME_REGEX.test(promptLower)) {
+      const isPause = TOGGLE_ACTIVE_REGEX.test(promptLower);
+      return res.json({
+        status: 'success',
+        message: isPause ? "Protocol received. I am pausing the workflow automation triggers." : "Protocol received. I am activating the workflow for live execution.",
+        actions: [{ type: 'TOGGLE_ACTIVE', isActive: !isPause }],
+        needsClarification: false,
+        assumptions: ["Applying active/paused state based on your direct instruction."]
+      });
+    }
+
+    const promptDetectedApps = getDetectedAppsFromText(prompt || "");
+    const historyDetectedApps = getDetectedAppsFromText(historyText || "");
+    const contextDetectedApps = mergeDetectedApps(promptDetectedApps, historyDetectedApps);
+    const referencesPriorApps = CONTEXT_REFERENCE_REGEX.test(promptLower);
+    const explicitBuildIntent =
+      ACTION_INTENT_REGEX.test(promptLower) ||
+      DECISION_TAKEOVER_REGEX.test(promptLower) ||
+      /\b(test|example|sample|suitable)\b/.test(promptLower);
+    if (contextDetectedApps.length >= 2 && (explicitBuildIntent || referencesPriorApps)) {
+      const deterministicPlan = matchTemplate(prompt, nextIdNum, historyText);
+      if (deterministicPlan) {
+        const reconciled = reconcilePlanWithExistingWorkflow(deterministicPlan, safeNodes, safeEdges);
+        return res.json({ status: "success", ...normalizeArchitectResult(reconciled, prompt) });
+      }
+    }
+
     // First try AI
     const systemPrompt = `You are the ORVEXIA AI ARCHITECT. You design automation workflows like Zapier.
 
@@ -1023,9 +1132,11 @@ RULES:
 6. If user says "you decide/as needed", proceed with best default assumptions and include them in "assumptions" array.
 7. NEVER duplicate existing app nodes unless user explicitly asks for another instance (example: Slack trigger + Slack action).
 8. Prefer reusing existing node IDs from current workflow; only add missing nodes.
+9. If the user mentions "all of them", "test all", or multiple apps, you MUST generate a complete chain connecting them logically (e.g. Gmail -> AI -> Notion -> Slack).
+10. If the canvas is currently empty or nodes are missing, re-build the requested automation from scratch.
 
-RESPOND WITH ONLY JSON (no markdown):
-{"message":"...","planStages":[{"stage":"TRIGGER","title":"...","summary":"..."}],"needsClarification":false,"followUpQuestions":[],"assumptions":[],"actions":[{"type":"ADD_NODE","nodeType":"Gmail","nodeId":"node_${nextIdNum}","role":"trigger","config":{},"requiresAuth":true,"authType":"oauth2"},{"type":"CONNECT_NODES","source":"node_0","target":"node_${nextIdNum}"}]}`;
+RESPOND WITH ONLY JSON (no markdown). You MUST output as many ADD_NODE and CONNECT_NODES actions as necessary to fulfill the user's entire multi-app request (e.g. if they ask for Slack, Gmail, and Notion, output 3 ADD_NODE actions and connect them):
+{"message":"...","planStages":[{"stage":"TRIGGER","title":"...","summary":"..."}],"needsClarification":false,"followUpQuestions":[],"assumptions":[],"actions":[{"type":"ADD_NODE","nodeType":"Gmail","nodeId":"node_${nextIdNum}","role":"trigger","config":{},"requiresAuth":true,"authType":"oauth2"},{"type":"ADD_NODE","nodeType":"Slack","nodeId":"node_999","role":"action","config":{},"requiresAuth":true,"authType":"oauth2"},{"type":"CONNECT_NODES","source":"node_${nextIdNum}","target":"node_999"}]}`;
 
     const aiResponse = await AIService.generate(systemPrompt);
     

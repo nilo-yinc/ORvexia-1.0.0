@@ -19,7 +19,7 @@ const appColors = {
 
 const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const status = workflow.status || (workflow.is_active ? 'active' : 'draft');
+  const status = workflow.status || (workflow.is_active ? 'active' : 'paused');
   const nodeLabels = (workflow.nodes || []).map(n => n.data?.label).filter(Boolean);
   const appChain = nodeLabels.length > 0 ? nodeLabels : ['Start'];
 
@@ -151,7 +151,15 @@ const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle }) => {
             <Clock className="w-3 h-3" />
             {timeSince(workflow.updatedAt)}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={(e) => { e.stopPropagation(); onToggle(workflow._id || workflow.id, !workflow.is_active); }}
+              className={`flex items-center gap-2 px-3 py-1.5 border transition-all ${workflow.is_active ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10' : 'border-white/10 bg-white/5 text-white/30 hover:bg-white/10'}`}
+              title={workflow.is_active ? "Pause Workflow" : "Activate Workflow"}
+            >
+              {workflow.is_active ? <Pause className="w-2.5 h-2.5 fill-current" /> : <Play className="w-2.5 h-2.5 fill-current" />}
+              <span className="text-[9px] font-black uppercase tracking-wider">{workflow.is_active ? 'Active' : 'Paused'}</span>
+            </button>
             <div className="flex flex-col items-end">
               <span className="text-[8px] font-mono text-white/10 uppercase">Runs</span>
               <span className="text-[10px] font-black text-white/50">{workflow.executions || workflow.stats?.total_runs || 0}</span>
