@@ -306,11 +306,15 @@ const toggleTemplate = async (req, res) => {
                 return `Automated ${triggerName} module for seamless system integration and orchestration.`;
             };
 
+            const User = require("../models/user.models");
+            const dbUser = await User.findById(req.user.id);
+            const actualAuthorName = dbUser && dbUser.name ? dbUser.name : 'System Architect';
+
             const blueprint = await Blueprint.create({
                 name: workflow.name,
                 description: workflow.description || generateDescription(nodes || []),
                 category: 'Community',
-                authorName: req.user.name || 'System Architect',
+                authorName: actualAuthorName,
                 definition: { nodes: sanitizedNodes, edges: edges || [] },
                 tags: [...new Set(tags)] // Unique tags
             });
