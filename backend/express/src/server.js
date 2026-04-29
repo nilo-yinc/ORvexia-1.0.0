@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const http = require("http");
 const net = require("net");
 const { Server } = require("socket.io");
@@ -20,6 +21,7 @@ const aiRoutes = require("./routes/ai.routes");
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (ngrok)
 const server = http.createServer(app);
+fs.mkdirSync(path.resolve(process.cwd(), "scratch"), { recursive: true });
 
 const parseAllowedOrigins = () => {
   const envOrigins = [
