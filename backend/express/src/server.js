@@ -111,7 +111,7 @@ app.use('/api/webhook', webhookRoutes);
 app.use('/api/apps', appsRouter);
 app.use("/api/v1/users", userRoutes);
 app.use('/api/blueprints', blueprintRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 app.use("/api/ai", aiRoutes);
 
 const preferredPort = Number(process.env.PORT || 3000);
