@@ -565,6 +565,19 @@ export const WorkflowBuilder = () => {
   // Load workflow
   useEffect(() => {
     if (id) {
+      // Check for Blueprint from Gallery
+      if (location.state?.blueprint) {
+        const bp = location.state.blueprint;
+        setWorkflowName(bp.name.toUpperCase());
+        const laidOut = layoutWorkflowNodes(bp.definition.nodes, bp.definition.edges);
+        setNodes(laidOut);
+        setEdges(bp.definition.edges);
+        // Clear state to prevent reload loop
+        navigate(location.pathname, { replace: true, state: {} });
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       workflowApi.getById(id).then((data) => {
         if (data) {
@@ -599,6 +612,18 @@ export const WorkflowBuilder = () => {
         }
       }).catch(console.error).finally(() => setIsLoading(false));
     } else {
+      // Check for Blueprint from Gallery (New Workflow)
+      if (location.state?.blueprint) {
+        const bp = location.state.blueprint;
+        setWorkflowName(bp.name.toUpperCase());
+        const laidOut = layoutWorkflowNodes(bp.definition.nodes, bp.definition.edges);
+        setNodes(laidOut);
+        setEdges(bp.definition.edges);
+        // Clear state
+        navigate(location.pathname, { replace: true, state: {} });
+        return;
+      }
+
       // Check for 'draft' when no ID
       const draft = localStorage.getItem(`${WORKFLOW_DRAFT_PREFIX}_draft`);
       if (draft) {

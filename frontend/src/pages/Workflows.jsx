@@ -8,6 +8,7 @@ import {
   ChevronDown, ToggleLeft, ToggleRight
 } from "lucide-react";
 import { workflowApi } from "../lib/api";
+import BlueprintGallery from "../components/blueprints/BlueprintGallery";
 
 // App color map for visual previews
 const appColors = {
@@ -179,10 +180,8 @@ export const Workflows = () => {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState('all'); // all, active, draft
-
-  useEffect(() => {
+  const [activeTab, setActiveTab] = useState('workflows'); // workflows, library
+  const [workflows, setWorkflows] = useState([]);
     fetchWorkflows();
   }, []);
 
@@ -298,53 +297,79 @@ export const Workflows = () => {
           ))}
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1 bg-surface-1 border border-white/[0.05] p-1 w-fit">
-          {['all', 'active', 'draft'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 text-[9px] font-black uppercase tracking-widest transition-all ${
-                filter === f ? 'bg-accent text-white' : 'text-white/30 hover:text-white/60'
-              }`}
-            >
-              {f === 'all' ? `All (${workflows.length})` : f === 'active' ? `Active (${activeCount})` : `Drafts (${draftCount})`}
-            </button>
-          ))}
-        </div>
-
-        {/* Workflows Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 relative z-10">
-          {filteredWorkflows.map((workflow, idx) => (
-            <WorkflowCard
-              key={workflow._id || workflow.id || idx}
-              workflow={workflow}
-              index={idx}
-              onClick={() => navigate(`/workflows/builder/${workflow._id || workflow.id}`)}
-              onDelete={handleDelete}
-              onToggle={handleToggle}
-            />
-          ))}
-
-          {/* Create New Card */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: filteredWorkflows.length * 0.05 }}
-            onClick={() => navigate("/workflows/builder")}
-            className="group relative bg-surface-1 border border-white/[0.03] border-dashed flex flex-col items-center justify-center p-12 cursor-pointer hover:border-accent/40 transition-all duration-300 min-h-[280px]"
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-8 border-b border-white/[0.03]">
+          <button
+            onClick={() => setActiveTab('workflows')}
+            className={`pb-4 text-[11px] font-black uppercase tracking-[0.4em] transition-all relative ${activeTab === 'workflows' ? 'text-accent' : 'text-white/20 hover:text-white/40'}`}
           >
-            <div className="w-14 h-14 flex items-center justify-center bg-surface-2 border border-white/5 group-hover:bg-accent/10 group-hover:border-accent/30 transition-all mb-5">
-              <Plus className="w-6 h-6 text-white/10 group-hover:text-accent transition-colors" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-white transition-colors">
-              Initialize_New_Module
-            </span>
-            <span className="text-[8px] font-mono text-white/10 mt-2 uppercase tracking-widest">
-              Click to create a new automation
-            </span>
-          </motion.div>
+            My Modules
+            {activeTab === 'workflows' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 w-full h-[2px] bg-accent" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`pb-4 text-[11px] font-black uppercase tracking-[0.4em] transition-all relative ${activeTab === 'library' ? 'text-accent' : 'text-white/20 hover:text-white/40'}`}
+          >
+            Global Library
+            {activeTab === 'library' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 w-full h-[2px] bg-accent" />}
+          </button>
         </div>
+
+        {activeTab === 'workflows' ? (
+          <>
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1 bg-surface-1 border border-white/[0.05] p-1 w-fit">
+              {['all', 'active', 'draft'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-2 text-[9px] font-black uppercase tracking-widest transition-all ${
+                    filter === f ? 'bg-accent text-white' : 'text-white/30 hover:text-white/60'
+                  }`}
+                >
+                  {f === 'all' ? `All (${workflows.length})` : f === 'active' ? `Active (${activeCount})` : `Drafts (${draftCount})`}
+                </button>
+              ))}
+            </div>
+
+            {/* Workflows Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 relative z-10">
+              {filteredWorkflows.map((workflow, idx) => (
+                <WorkflowCard
+                  key={workflow._id || workflow.id || idx}
+                  workflow={workflow}
+                  index={idx}
+                  onClick={() => navigate(`/workflows/builder/${workflow._id || workflow.id}`)}
+                  onDelete={handleDelete}
+                  onToggle={handleToggle}
+                />
+              ))}
+
+              {/* Create New Card */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: filteredWorkflows.length * 0.05 }}
+                onClick={() => navigate("/workflows/builder")}
+                className="group relative bg-surface-1 border border-white/[0.03] border-dashed flex flex-col items-center justify-center p-12 cursor-pointer hover:border-accent/40 transition-all duration-300 min-h-[280px]"
+              >
+                <div className="w-14 h-14 flex items-center justify-center bg-surface-2 border border-white/5 group-hover:bg-accent/10 group-hover:border-accent/30 transition-all mb-5">
+                  <Plus className="w-6 h-6 text-white/10 group-hover:text-accent transition-colors" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-white transition-colors">
+                  Initialize_New_Module
+                </span>
+                <span className="text-[8px] font-mono text-white/10 mt-2 uppercase tracking-widest">
+                  Click to create a new automation
+                </span>
+              </motion.div>
+            </div>
+          </>
+        ) : (
+          <div className="py-10">
+            <BlueprintGallery onSelectBlueprint={(bp) => navigate("/workflows/builder", { state: { blueprint: bp } })} />
+          </div>
+        )}
 
         {/* Empty State */}
         {workflows.length === 0 && !loading && (

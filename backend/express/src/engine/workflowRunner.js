@@ -9,16 +9,6 @@ const fs = require("fs");
 const path = require("path");
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const DEBUG_LOG_PATH = path.resolve(process.cwd(), "scratch", "exec_debug.log");
-
-const appendDebugLog = (message) => {
-  try {
-    fs.mkdirSync(path.dirname(DEBUG_LOG_PATH), { recursive: true });
-    fs.appendFileSync(DEBUG_LOG_PATH, message);
-  } catch (error) {
-    console.warn(`[WorkflowRunner] Debug log write skipped: ${error.message}`);
-  }
-};
 
 const normalizeLabel = (node) => String(node?.data?.label || node?.data?.app || "").trim().toLowerCase();
 
@@ -899,12 +889,10 @@ const runWorkflow = async (nodes, edges, execution, io) => {
       context.current = { ...context.current, ...output };
       
       const logMsg = `[${new Date().toISOString()}] Node ${currentNode.id} finished. Output: ${JSON.stringify(output)}\n`;
-      appendDebugLog(logMsg);
 
       // Merge node outputs into trigger context so {{trigger.XXX}} always works
       if (output && typeof output === 'object') {
         context.trigger = { ...context.trigger, ...output };
-        appendDebugLog(`[DEBUG] Updated context.trigger: ${JSON.stringify(context.trigger)}\n`);
       }
 
       const kind = getNodeKind(currentNode);

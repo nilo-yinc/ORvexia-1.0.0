@@ -18,6 +18,8 @@ const passport = require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
 const aiRoutes = require("./routes/ai.routes");
 
+const blueprintController = require('./controllers/blueprintController');
+const blueprintRoutes = require('./routes/blueprintRoutes');
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (ngrok)
 const server = http.createServer(app);
@@ -108,7 +110,8 @@ app.use('/api/workflows', workflowRouter);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/apps', appsRouter);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/auth", authRoutes);
+app.use('/api/blueprints', blueprintRoutes);
+app.use('/api/auth', authRoutes);
 app.use("/api/ai", aiRoutes);
 
 const preferredPort = Number(process.env.PORT || 3000);
@@ -133,6 +136,8 @@ const startServer = (portToUse) => server.listen(portToUse, async () => {
       }
       const ngrok = require('@ngrok/ngrok');
       const listener = await ngrok.forward({ addr: portToUse, authtoken: ngrokToken });
+      await blueprintController.seedPowerTrio();
+      console.log('✅ MongoDB connected successfully');
       console.log(`[Ngrok] Tunnel active at: ${listener.url()}`);
       console.log(`[Ngrok] Use this URL for Webhook Configurations!`);
     } catch (err) {

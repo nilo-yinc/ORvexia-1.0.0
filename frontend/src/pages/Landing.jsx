@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import BlueprintGallery from '../components/blueprints/BlueprintGallery';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -377,6 +378,30 @@ export const Landing = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Blueprint Showcase Section */}
+      <section className="py-40 bg-[#030303] relative overflow-hidden border-y border-white/[0.03]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-accent/5 blur-[120px] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-4 mb-20 text-center space-y-4">
+          <motion.span 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-[10px] font-bold tracking-[0.5em] text-accent uppercase bg-accent/10 px-6 py-2 rounded-full inline-block"
+          >
+            System Templates
+          </motion.span>
+          <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase">
+            GLOBAL <span className="text-accent italic">BLUEPRINTS.</span>
+          </h2>
+          <p className="text-white/40 max-w-2xl mx-auto text-sm uppercase tracking-widest font-medium">
+            Deploy hard-coded power-trio workflows instantly. 
+            Connect Gmail, Slack, and Notion in one continuous neural flow.
+          </p>
+        </div>
+
+        <BlueprintGallery onSelectBlueprint={(bp) => navigate('/login', { state: { blueprint: bp } })} />
       </section>
 
       {/* --- FEATURES GRID --- */}

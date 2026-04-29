@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, Zap, Shield, Terminal, Cpu, Github } from 'lucide-react';
 
@@ -33,6 +33,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [view, setView] = useState('login'); // 'login' | 'forgot_email' | 'forgot_otp'
   const [email, setEmail] = useState('');
@@ -48,7 +49,7 @@ export const Login = () => {
     setMessage('');
     try {
       await login(email, password);
-      navigate('/home');
+      navigate('/workflows/builder', { state: location.state });
     } catch (error) {
       console.error('Login error:', error);
       setMessage(error.message || 'Login failed');
