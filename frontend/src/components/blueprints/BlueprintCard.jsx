@@ -104,17 +104,35 @@ const BlueprintCard = ({ blueprint, onUse }) => {
         )}
       </div>
 
-      <div className="flex flex-col mb-4">
-        <span className="text-[9px] font-mono text-white/20 uppercase tracking-[0.2em] mb-1">
-          Architected by: <span className="text-accent/60">{blueprint.authorName || 'ORvexia User'}</span>
-        </span>
-        <h3 className="text-lg font-bold text-white group-hover:text-yellow-400 transition-colors">
+      <div className="flex flex-col mb-4 mt-2">
+        <h3 className="text-xl font-black text-white group-hover:text-accent transition-colors tracking-tighter uppercase">
           {blueprint.name}
         </h3>
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[8px] font-mono text-accent uppercase tracking-widest px-2 py-0.5 bg-accent/10 border border-accent/20">
+            Architect
+          </span>
+          <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">
+            {blueprint.authorName || 'System Architect'}
+          </span>
+        </div>
       </div>
-      <p className="text-sm text-gray-400 flex-grow mb-6 line-clamp-3">
+
+      <p className="text-[11px] font-mono text-white/40 flex-grow mb-6 line-clamp-3 leading-relaxed">
         {blueprint.description}
       </p>
+
+      {/* Module count */}
+      <div className="flex items-center gap-4 mb-4 pt-4 border-t border-white/5">
+        <div className="flex flex-col">
+           <span className="text-[8px] font-mono text-white/20 uppercase tracking-widest">Nodes</span>
+           <span className="text-xs font-black text-white/60">{blueprint.definition?.nodes?.length || 0}</span>
+        </div>
+        <div className="flex flex-col">
+           <span className="text-[8px] font-mono text-white/20 uppercase tracking-widest">Category</span>
+           <span className="text-xs font-black text-white/60 uppercase">{blueprint.category || 'System'}</span>
+        </div>
+      </div>
 
       <div className="mt-auto flex items-center justify-between">
         <div className="flex gap-2">
