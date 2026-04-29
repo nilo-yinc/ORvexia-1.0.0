@@ -1135,6 +1135,31 @@ export const WorkflowBuilder = () => {
               }
             });
 
+          // Process UPDATE_NODE actions
+          result.actions
+            .filter((a) => a.type === 'UPDATE_NODE')
+            .forEach((action) => {
+              const targetId = String(action.nodeId || '');
+              if (!targetId) return;
+              
+              newNodes = newNodes.map((node) => {
+                if (node.id === targetId) {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      ...(action.config || {}), // Top level data override (e.g. status)
+                      config: {
+                        ...(node.data.config || {}),
+                        ...(action.config || {}), // Nested config override
+                      },
+                    },
+                  };
+                }
+                return node;
+              });
+            });
+
           // Process CONNECT_NODES actions
           let validConnectCount = 0;
           result.actions
@@ -1312,39 +1337,56 @@ export const WorkflowBuilder = () => {
             className={`absolute top-0 right-0 h-full w-1.5 ${isResizingCopilot ? 'bg-accent/50' : 'bg-white/[0.04] hover:bg-accent/30'} cursor-col-resize transition-colors`}
             title="Resize Copilot"
           />
-          <div className="px-6 py-4 border-b border-white/[0.05] flex items-center justify-between bg-white/[0.01]">
+          <div className="px-6 py-4 border-b border-white/[0.05] flex items-center justify-between bg-black/20">
             <div className="flex items-center gap-3">
-              <Sparkles className="w-4 h-4 text-accent" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/70">AI_ARCHITECT</span>
+              <div className="relative">
+                <Bot className="w-4 h-4 text-accent" />
+                <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">AI_ARCHITECT_v4</span>
+                <span className="text-[7px] font-mono text-white/30 uppercase tracking-widest">SYSTEM_READY // FULL_AGENTIC_ACCESS</span>
+              </div>
             </div>
-            <button onClick={() => setShowPalette(!showPalette)} className={`p-2 transition-all ${showPalette ? 'text-accent' : 'text-white/20'}`}>
-              <Plus className="w-4 h-4" />
+            <button onClick={() => setMessages([{ id: 'init', role: 'ai', text: 'SYSTEM_READY. I am your architectural copilot. Describe the logic you wish to implement.', type: 'info' }])} className="p-2 text-white/10 hover:text-white transition-colors">
+               <Repeat className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-0/50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-surface-0/30 scrollbar-thin scrollbar-thumb-white/5">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`max-w-[95%] p-4 text-[11px] leading-relaxed font-medium ${
+                <div className="flex items-center gap-2 mb-1.5 px-1">
+                   <span className="text-[7px] font-black uppercase tracking-widest text-white/20">
+                     {msg.role === 'user' ? 'Operator' : 'Architect'}
+                   </span>
+                </div>
+                <div className={`max-w-[95%] p-4 text-[11px] leading-relaxed font-medium selection:bg-accent/30 ${
                   msg.role === "user" 
-                    ? "bg-accent/10 border border-accent/20 text-white/90 shadow-[0_0_20px_rgba(255,95,31,0.05)]" 
+                    ? "bg-accent/5 border border-accent/20 text-white/90 shadow-[0_4px_20px_rgba(255,95,31,0.03)]" 
                     : msg.type === "success"
-                    ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                    ? "bg-emerald-500/5 border border-emerald-500/20 text-emerald-400"
                     : msg.type === "error"
-                    ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                    ? "bg-red-500/5 border border-red-500/20 text-red-400"
                     : msg.type === "auth_wait"
-                    ? "bg-amber-500/10 border border-amber-500/20 text-amber-300"
-                    : "bg-white/[0.02] border border-white/[0.05] text-white/60"
+                    ? "bg-amber-500/5 border border-amber-500/20 text-amber-300"
+                    : "bg-white/[0.02] border border-white/[0.05] text-white/70"
                 }`}>
-                  {msg.text}
+                  {msg.text.split('\n').map((line, i) => (
+                    <p key={i} className={i > 0 ? "mt-2" : ""}>{line}</p>
+                  ))}
                 </div>
               </div>
             ))}
             {isAiTyping && (
-              <div className="flex flex-col items-start gap-2">
-                <div className="bg-white/[0.02] border border-white/[0.05] p-4 flex items-center gap-2">
-                  <Loader2 className="w-3 h-3 animate-spin text-accent" />
-                  <span className="text-[10px] text-white/30 uppercase tracking-widest">Architecting workflow...</span>
+              <div className="flex flex-col items-start gap-2 animate-pulse">
+                <div className="bg-white/[0.01] border border-white/[0.03] p-4 flex items-center gap-3">
+                  <div className="flex gap-1">
+                    <div className="w-1 h-1 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1 h-1 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1 h-1 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-[9px] text-white/20 uppercase font-black tracking-widest italic">Computing Strategy...</span>
                 </div>
               </div>
             )}

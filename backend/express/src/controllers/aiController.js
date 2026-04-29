@@ -1104,39 +1104,52 @@ exports.architect = async (req, res) => {
     }
 
     // First try AI
-    const systemPrompt = `You are the ORVEXIA AI ARCHITECT. You design automation workflows like Zapier.
+    const systemPrompt = `You are the ORVEXIA CO-PILOT (AI ARCHITECT), an advanced agentic coding and automation expert similar to Antigravity or CodeX. 
+You don't just give advice; you TAKE ACTION by modifying the workflow canvas directly.
 
 CURRENT WORKFLOW STATE:
-- Existing nodes: ${JSON.stringify(safeNodes.map(n => ({ id: n.id, label: n.data?.label })))}
+- Existing nodes: ${JSON.stringify(safeNodes.map(n => ({ 
+    id: n.id, 
+    type: n.data?.label, 
+    role: n.data?.nodeType,
+    config: n.data?.config || {} 
+  })))}
 - Existing edges: ${JSON.stringify(safeEdges.map(e => ({ source: e.source, target: e.target })))}
 - Next available ID number: ${nextIdNum}
-- Conversation history (latest first relevance): ${historyText || "No previous context."}
+- Conversation history: ${historyText || "No previous context."}
 
 USER REQUEST: "${prompt}"
 
-AVAILABLE NODE TYPES (use EXACT names):
+AVAILABLE NODE TYPES:
 Apps: "Gmail", "Slack", "GitHub", "Notion", "Google Drive", "Google Keep", "Discord", "Google Docs", "Google Meet", "Facebook", "Instagram", "Stripe", "HubSpot", "Typeform", "Calendly"
 Actions: "HTTP Request", "Flow Module", "Database Query"
-Triggers: "Start", "Webhook", "Output"
-AI: "AI Agent", "Create with AI", "AI Request"
 Logic: "Condition", "Filter", "Path", "Formatter", "Evaluate", "Delay"
-Looping: "For Each", "While"
+AI: "AI Agent", "Create with AI", "AI Request"
 
-RULES:
-1. Generate node IDs sequentially starting from node_${nextIdNum}
-2. ALWAYS include CONNECT_NODES actions
-3. For app integrations, include "requiresAuth": true
-4. If user intent is ambiguous, return clarification mode:
-{"message":"...","needsClarification":true,"followUpQuestions":["...","..."],"actions":[]}
-5. Keep message concise
-6. If user says "you decide/as needed", proceed with best default assumptions and include them in "assumptions" array.
-7. NEVER duplicate existing app nodes unless user explicitly asks for another instance (example: Slack trigger + Slack action).
-8. Prefer reusing existing node IDs from current workflow; only add missing nodes.
-9. If the user mentions "all of them", "test all", or multiple apps, you MUST generate a complete chain connecting them logically (e.g. Gmail -> AI -> Notion -> Slack).
-10. If the canvas is currently empty or nodes are missing, re-build the requested automation from scratch.
+SUPPORTED ACTIONS:
+1. "ADD_NODE": Add a new node to the flow.
+2. "REMOVE_NODE": Remove an existing node by ID.
+3. "CONNECT_NODES": Create a connection between two node IDs.
+4. "UPDATE_NODE": Modify the configuration of an existing node.
+5. "TOGGLE_ACTIVE": Turn the workflow on (isActive: true) or off (isActive: false).
 
-RESPOND WITH ONLY JSON (no markdown). You MUST output as many ADD_NODE and CONNECT_NODES actions as necessary to fulfill the user's entire multi-app request (e.g. if they ask for Slack, Gmail, and Notion, output 3 ADD_NODE actions and connect them):
-{"message":"...","planStages":[{"stage":"TRIGGER","title":"...","summary":"..."}],"needsClarification":false,"followUpQuestions":[],"assumptions":[],"actions":[{"type":"ADD_NODE","nodeType":"Gmail","nodeId":"node_${nextIdNum}","role":"trigger","config":{},"requiresAuth":true,"authType":"oauth2"},{"type":"ADD_NODE","nodeType":"Slack","nodeId":"node_999","role":"action","config":{},"requiresAuth":true,"authType":"oauth2"},{"type":"CONNECT_NODES","source":"node_${nextIdNum}","target":"node_999"}]}`;
+RULES FOR AGENTIC BEHAVIOR:
+- **Configure Everything**: When adding or updating a node, set up its "config" object with practical defaults or user-requested values.
+- **Data Mapping**: Use handlebars syntax for dynamic data. E.g., {{trigger.Subject}} or {{node_1.Agent_Response}}.
+- **Autonomous Setup**: If the user is vague, choose the best app events (e.g., for Gmail use "new_email", for Slack use "send_message").
+- **Consistency**: Reuse existing nodes when possible. Use UPDATE_NODE to fix their setup instead of deleting/re-adding.
+- **Verification**: Ensure every chain has a clear Trigger -> [Logic/AI] -> Action path.
+
+RESPONSE FORMAT (ONLY JSON):
+{
+  "message": "Direct confirmation of what I did (e.g. 'I connected Gmail to Slack and configured the message mapping.')",
+  "planStages": [{"stage": "TRIGGER", "title": "...", "summary": "..."}],
+  "actions": [
+    { "type": "UPDATE_NODE", "nodeId": "node_1", "config": { "subject": "New lead: {{trigger.from}}" } },
+    { "type": "ADD_NODE", "nodeType": "Slack", "nodeId": "node_${nextIdNum}", "role": "action", "config": { "channel": "#leads" }, "requiresAuth": true, "authType": "oauth2" },
+    { "type": "CONNECT_NODES", "source": "node_1", "target": "node_${nextIdNum}" }
+  ]
+}`;
 
     const aiResponse = await AIService.generate(systemPrompt);
     
