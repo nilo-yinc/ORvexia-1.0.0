@@ -181,7 +181,10 @@ export const Workflows = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('workflows'); // workflows, library
-  const [workflows, setWorkflows] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('all'); // all, active, draft
+
+  useEffect(() => {
     fetchWorkflows();
   }, []);
 
