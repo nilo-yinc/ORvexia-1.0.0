@@ -365,7 +365,7 @@ export const WorkflowBuilder = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [workflowName, setWorkflowName] = useState("NEW_ARCHITECTURE_MODULE");
+  const [workflowName, setWorkflowName] = useState("UNTITLED_WORKFLOW");
   const [showPalette, setShowPalette] = useState(true);
   const [showCmdK, setShowCmdK] = useState(false);
   const [paletteSearch, setPaletteSearch] = useState('');
