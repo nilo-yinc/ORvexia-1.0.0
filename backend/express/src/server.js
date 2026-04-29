@@ -21,18 +21,58 @@ const app = express();
 app.set('trust proxy', 1); // Trust first proxy (ngrok)
 const server = http.createServer(app);
 
+const parseAllowedOrigins = () => {
+  const envOrigins = [
+    process.env.CLIENT_URL,
+    process.env.CORS_ORIGINS,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([
+    "http://localhost:5173",
+    "https://orvexia.vercel.app",
+    "https://orvexiaaiautomation.vercel.app",
+    ...envOrigins,
+  ]));
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
+const corsOriginResolver = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`CORS blocked for origin: ${origin}`));
+};
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://orvexia.vercel.app"], 
+    origin: corsOriginResolver,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("Express Server Running");
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: "orvexia-backend",
+    time: new Date().toISOString(),
+  });
+});
+
 // 1. CORS MUST BE FIRST
 app.use(
   cors({
-    origin: "http://localhost:5173", 
+    origin: corsOriginResolver,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
@@ -62,10 +102,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => {
-  res.send('Express Server Running');
-});
-
 app.use('/api/workflows', workflowRouter);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/apps', appsRouter);
@@ -82,6 +118,7 @@ const startServer = (portToUse) => server.listen(portToUse, async () => {
   const oauthBaseUrl = getOauthBaseUrl(portToUse);
   console.log(`Server is running on port ${portToUse}`);
   console.log(`[Auth] OAuth callback base URL: ${oauthBaseUrl}`);
+  console.log(`[CORS] Allowed origins: ${allowedOrigins.join(", ")}`);
   if ((process.env.BACKEND_PUBLIC_URL || "").includes("ngrok") && !process.env.OAUTH_PUBLIC_URL) {
     console.warn("[Auth] BACKEND_PUBLIC_URL uses ngrok. Set OAUTH_PUBLIC_URL to a stable callback URL (example: http://localhost:3000) to avoid redirect_uri_mismatch.");
   }

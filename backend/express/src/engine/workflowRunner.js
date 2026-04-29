@@ -5,8 +5,20 @@ const Workflow = require("../models/workflow-model");
 const User = require("../models/user.models");
 const GoogleService = require("../services/GoogleService");
 const ConnectionService = require("../services/ConnectionService");
+const fs = require("fs");
+const path = require("path");
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const DEBUG_LOG_PATH = path.resolve(process.cwd(), "scratch", "exec_debug.log");
+
+const appendDebugLog = (message) => {
+  try {
+    fs.mkdirSync(path.dirname(DEBUG_LOG_PATH), { recursive: true });
+    fs.appendFileSync(DEBUG_LOG_PATH, message);
+  } catch (error) {
+    console.warn(`[WorkflowRunner] Debug log write skipped: ${error.message}`);
+  }
+};
 
 const normalizeLabel = (node) => String(node?.data?.label || node?.data?.app || "").trim().toLowerCase();
 
@@ -886,14 +898,13 @@ const runWorkflow = async (nodes, edges, execution, io) => {
       context.steps[currentNode.id] = output;
       context.current = { ...context.current, ...output };
       
-      const fs = require('fs');
       const logMsg = `[${new Date().toISOString()}] Node ${currentNode.id} finished. Output: ${JSON.stringify(output)}\n`;
-      fs.appendFileSync('scratch/exec_debug.log', logMsg);
+      appendDebugLog(logMsg);
 
       // Merge node outputs into trigger context so {{trigger.XXX}} always works
       if (output && typeof output === 'object') {
         context.trigger = { ...context.trigger, ...output };
-        fs.appendFileSync('scratch/exec_debug.log', `[DEBUG] Updated context.trigger: ${JSON.stringify(context.trigger)}\n`);
+        appendDebugLog(`[DEBUG] Updated context.trigger: ${JSON.stringify(context.trigger)}\n`);
       }
 
       const kind = getNodeKind(currentNode);
