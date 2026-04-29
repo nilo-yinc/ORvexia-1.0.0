@@ -253,6 +253,64 @@ const toggleWorkflow = async (req, res) => {
     }
 };
 
+const Blueprint = require("../models/blueprint-model");
+
+const toggleTemplate = async (req, res) => {
+    try {
+        const workflow = await Workflow.findById(req.params.id);
+        if (!workflow) return res.status(404).json({ error: "Workflow not found" });
+        if (String(workflow.owner_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: "You do not own this workflow" });
+        }
+
+        if (workflow.is_template) {
+            // Remove from template
+            if (workflow.blueprint_id) {
+                await Blueprint.findByIdAndDelete(workflow.blueprint_id);
+            }
+            workflow.is_template = false;
+            workflow.blueprint_id = null;
+        } else {
+            // Add as template
+            const activeVersion = await WorkflowVersion.findById(workflow.active_version_id);
+            if (!activeVersion) return res.status(400).json({ error: "Workflow has no active version to share." });
+
+            const { nodes, edges } = activeVersion.definition;
+            
+            // Basic sanitization
+            const sanitizedNodes = (nodes || []).map(node => {
+                const { data, ...rest } = node;
+                const sanitizedData = { ...data };
+                delete sanitizedData.token;
+                delete sanitizedData.apiKey;
+                delete sanitizedData.secret;
+                delete sanitizedData.password;
+                return { ...rest, data: sanitizedData };
+            });
+
+            const tags = (nodes || []).map(n => n.data?.app).filter(Boolean);
+
+            const blueprint = await Blueprint.create({
+                name: workflow.name,
+                description: workflow.description || `A powerful automation module combining ${(nodes || []).map(n => n.data?.label).join(', ')}.`,
+                category: 'Community',
+                authorName: req.user.name || 'ORvexia User',
+                definition: { nodes: sanitizedNodes, edges: edges || [] },
+                tags: [...new Set(tags)] // Unique tags
+            });
+
+            workflow.is_template = true;
+            workflow.blueprint_id = blueprint._id;
+        }
+
+        workflow.updatedAt = new Date();
+        await workflow.save();
+        res.json({ success: true, workflow });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     createWorkflow,
     getworkflows,
@@ -262,4 +320,5 @@ module.exports = {
     getGlobalExecutions,
     deleteWorkflow,
     toggleWorkflow,
+    toggleTemplate,
 };

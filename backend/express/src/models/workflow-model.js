@@ -21,6 +21,10 @@ const WorkflowSchema = new mongoose.Schema({
   // Controls whether the workflow can be triggered
   is_active: { type: Boolean, default: false },
 
+  // Template sharing tracking
+  is_template: { type: Boolean, default: false },
+  blueprint_id: { type: mongoose.Schema.Types.ObjectId, ref: "Blueprint" },
+
   // Encrypted Environment Variables for integrations (API Keys, etc)
   envVars: [{
     key: String,

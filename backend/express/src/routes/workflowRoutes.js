@@ -19,6 +19,7 @@ router.get("/:id", isLoggedIn, getWorkflowById);
 router.post("/:id/execute", isLoggedIn, executeWorkflow);
 router.get("/:id/executions", isLoggedIn, getWorkflowExecutions);
 router.patch("/:id/toggle", isLoggedIn, toggleWorkflow);
+router.patch("/:id/toggle-template", isLoggedIn, require("../controllers/workflowController").toggleTemplate);
 router.delete("/:id", isLoggedIn, deleteWorkflow);
 
 

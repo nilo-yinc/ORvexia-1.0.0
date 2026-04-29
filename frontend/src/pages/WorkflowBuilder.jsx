@@ -577,9 +577,14 @@ export const WorkflowBuilder = () => {
           position: node.position || { x: 150 + (i % 4) * 300, y: 200 + Math.floor(i / 4) * 200 },
           type: node.type || 'custom',
         }));
+        const styledEdges = bpEdges.map(edge => ({
+          ...edge,
+          type: edge.type || 'custom',
+          markerEnd: edge.markerEnd || { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.3)' },
+        }));
         setWorkflowName(bp.name ? bp.name.toUpperCase() : 'BLUEPRINT_MODULE');
         setNodes(positionedNodes);
-        setEdges(bpEdges);
+        setEdges(styledEdges);
         navigate(location.pathname, { replace: true, state: {} });
         setIsLoading(false);
         return;
@@ -629,9 +634,14 @@ export const WorkflowBuilder = () => {
           position: node.position || { x: 150 + (i % 4) * 300, y: 200 + Math.floor(i / 4) * 200 },
           type: node.type || 'custom',
         }));
+        const styledEdges = bpEdges.map(edge => ({
+          ...edge,
+          type: edge.type || 'custom',
+          markerEnd: edge.markerEnd || { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.3)' },
+        }));
         setWorkflowName(bp.name ? bp.name.toUpperCase() : 'BLUEPRINT_MODULE');
         setNodes(positionedNodes);
-        setEdges(bpEdges);
+        setEdges(styledEdges);
         navigate(location.pathname, { replace: true, state: {} });
         return;
       }

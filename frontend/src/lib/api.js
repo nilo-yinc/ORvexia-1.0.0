@@ -53,10 +53,14 @@ export const workflowApi = {
     return response.data;
   },
 
-  toggle: async (id, isActive) => {
-    const response = await api.patch(`/workflows/${id}/toggle`, { is_active: isActive });
-    return response.data;
-  }
+  toggle: async (id, is_active) => {
+    const res = await api.patch(`/workflows/${id}/toggle`, { is_active });
+    return res.data;
+  },
+  toggleTemplate: async (id) => {
+    const res = await api.patch(`/workflows/${id}/toggle-template`);
+    return res.data;
+  },
 };
 
 export const appsApi = {

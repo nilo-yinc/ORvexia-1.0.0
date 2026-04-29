@@ -161,11 +161,11 @@ const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle, onShare })
             <div className="flex items-center gap-2">
               <button 
                 onClick={(e) => { e.stopPropagation(); onShare(workflow); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-accent/20 bg-accent/5 text-accent hover:bg-accent/10 transition-all group/share"
-                title="Add as Template"
+                className={`flex items-center gap-1.5 px-3 py-1.5 border transition-all group/share ${workflow.is_template ? 'border-accent/40 bg-accent/10 text-accent hover:bg-accent/20' : 'border-accent/20 bg-accent/5 text-accent hover:bg-accent/10'}`}
+                title={workflow.is_template ? "Remove from Template" : "Add as Template"}
               >
-                <Share2 className="w-2.5 h-2.5 group-hover/share:scale-110 transition-transform" />
-                <span className="text-[8px] font-black uppercase tracking-wider">Template</span>
+                <Share2 className={`w-2.5 h-2.5 group-hover/share:scale-110 transition-transform ${workflow.is_template ? 'fill-accent' : ''}`} />
+                <span className="text-[8px] font-black uppercase tracking-wider">{workflow.is_template ? 'Published' : 'Template'}</span>
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onToggle(workflow._id || workflow.id, !workflow.is_active); }}
@@ -243,21 +243,20 @@ export const Workflows = () => {
 
   const handleShare = async (workflow) => {
     try {
-      await blueprintApi.share({
-        name: workflow.name,
-        description: workflow.description || `A powerful automation module combining ${workflow.nodes?.map(n => n.data?.label).join(', ')}.`,
-        category: 'Community',
-        authorName: user?.name || 'ORvexia User',
-        definition: {
-          nodes: workflow.nodes,
-          edges: workflow.edges
-        },
-        tags: workflow.nodes?.map(n => n.data?.app).filter(Boolean) || []
-      });
-      alert("TEMPLATE_PUBLISHED: This module is now live in the System Library.");
+      const updatedWorkflow = await workflowApi.toggleTemplate(workflow._id || workflow.id);
+      setWorkflows(prev => prev.map(w => 
+        (w._id || w.id) === (workflow._id || workflow.id) 
+          ? { ...w, is_template: updatedWorkflow.workflow.is_template }
+          : w
+      ));
+      if (updatedWorkflow.workflow.is_template) {
+        alert("TEMPLATE_PUBLISHED: This module is now live in the System Library.");
+      } else {
+        alert("TEMPLATE_REMOVED: This module was removed from the System Library.");
+      }
     } catch (err) {
-      console.error("Share failed:", err);
-      alert("SHARE_FAILED: Could not publish template.");
+      console.error("Template toggle failed:", err);
+      alert("OPERATION_FAILED: Could not modify template status.");
     }
   };
 
