@@ -287,7 +287,7 @@ const autoHealGraphConnectivity = (nodes = [], edges = []) => {
 };
 
 // --- INNER CANVAS ---
-const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, undo, redo, historyIndex, history, onRun, setShowCmdK, isWorkflowActive, onToggleActive, hasId }) => {
+const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onNodesDelete, onEdgesDelete, undo, redo, historyIndex, history, onRun, setShowCmdK, isWorkflowActive, onToggleActive, hasId }) => {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   return (
     <>
@@ -295,6 +295,7 @@ const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, on
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
         onConnect={onConnect} onNodeClick={onNodeClick}
+        onNodesDelete={onNodesDelete} onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes} edgeTypes={edgeTypes}
         fitView className="canvas-grid"
         proOptions={{ hideAttribution: true }}
@@ -727,6 +728,18 @@ export const WorkflowBuilder = () => {
     saveHistory(nodes, ne);
   }, [edges, nodes]);
 
+  const onNodesDelete = useCallback((deleted) => {
+    const remaining = nodes.filter((n) => !deleted.some((d) => d.id === n.id));
+    setNodes(remaining);
+    saveHistory(remaining, edges);
+  }, [nodes, edges]);
+
+  const onEdgesDelete = useCallback((deleted) => {
+    const remaining = edges.filter((e) => !deleted.some((d) => d.id === e.id));
+    setEdges(remaining);
+    saveHistory(nodes, remaining);
+  }, [nodes, edges]);
+
   const onNodeClick = useCallback((_, node) => setSelectedNode(node), []);
 
   const handleSave = async () => {
@@ -828,21 +841,9 @@ export const WorkflowBuilder = () => {
     const newNode = addBlockAtPosition(block, typeof category === 'string' ? category : 'Actions', null, newPos);
     setNodeIdCounter((c) => c + 1);
     
-    // Auto-connect to last node
-    const newEdge = lastNode ? {
-      id: `e_${lastNode.id}_${newNode.id}`,
-      source: lastNode.id,
-      target: newNode.id,
-      type: 'custom',
-      data: { active: false },
-      markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.3)' },
-    } : null;
-
     const nn = [...nodes, newNode];
-    const ne = newEdge ? [...edges, newEdge] : edges;
     setNodes(nn);
-    setEdges(ne);
-    saveHistory(nn, ne);
+    saveHistory(nn, edges);
   };
 
   const connectedAppKeys = useMemo(() => {
@@ -1428,6 +1429,7 @@ export const WorkflowBuilder = () => {
                     nodes={nodes} edges={edges} 
                     onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} 
                     onConnect={onConnect} onNodeClick={onNodeClick} 
+                    onNodesDelete={onNodesDelete} onEdgesDelete={onEdgesDelete}
                     undo={undo} redo={redo} 
                     historyIndex={historyIndex} history={history} 
                     onRun={handleRun} 

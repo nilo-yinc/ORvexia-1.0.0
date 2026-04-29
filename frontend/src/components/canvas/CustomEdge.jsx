@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { getBezierPath, EdgeLabelRenderer } from 'reactflow';
+import { getBezierPath, EdgeLabelRenderer, useReactFlow } from 'reactflow';
 
 const CustomEdge = memo(({
   id,
@@ -13,6 +13,7 @@ const CustomEdge = memo(({
   markerEnd,
   data,
 }) => {
+  const { setEdges } = useReactFlow();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -89,19 +90,34 @@ const CustomEdge = memo(({
         </circle>
       )}
 
-      {/* Edge label - Monospace industrial tag */}
-      {data?.label && (
-        <EdgeLabelRenderer>
-          <div
-            className="absolute px-1.5 py-0.5 bg-surface-1 border border-white/10 text-[8px] font-mono text-white/40 uppercase tracking-[0.2em] pointer-events-none"
-            style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+      {/* Edge label - Monospace industrial tag with Delete button */}
+      <EdgeLabelRenderer>
+        <div
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            pointerEvents: 'all',
+          }}
+          className="flex items-center gap-1 group/edge-label"
+        >
+          {data?.label && (
+            <div className="px-1.5 py-0.5 bg-surface-1 border border-white/10 text-[8px] font-mono text-white/40 uppercase tracking-[0.2em]">
+              DATA_FLOW::{data.label}
+            </div>
+          )}
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setEdges((es) => es.filter((edge) => edge.id !== id));
             }}
+            className="w-4 h-4 bg-surface-1 border border-white/10 flex items-center justify-center text-[10px] text-white/20 hover:text-red-400 hover:border-red-500/30 transition-all opacity-0 group-hover/edge-label:opacity-100"
+            title="Remove Connection"
           >
-            DATA_FLOW::{data.label}
-          </div>
-        </EdgeLabelRenderer>
-      )}
+            ×
+          </button>
+        </div>
+      </EdgeLabelRenderer>
     </>
   );
 });
