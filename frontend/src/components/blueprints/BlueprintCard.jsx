@@ -104,9 +104,14 @@ const BlueprintCard = ({ blueprint, onUse }) => {
         )}
       </div>
 
-      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-yellow-400 transition-colors">
-        {blueprint.name}
-      </h3>
+      <div className="flex flex-col mb-4">
+        <span className="text-[9px] font-mono text-white/20 uppercase tracking-[0.2em] mb-1">
+          Architected by: <span className="text-accent/60">{blueprint.authorName || 'ORvexia User'}</span>
+        </span>
+        <h3 className="text-lg font-bold text-white group-hover:text-yellow-400 transition-colors">
+          {blueprint.name}
+        </h3>
+      </div>
       <p className="text-sm text-gray-400 flex-grow mb-6 line-clamp-3">
         {blueprint.description}
       </p>

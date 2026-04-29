@@ -358,9 +358,10 @@ const CanvasInner = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, on
 
 // --- MAIN EXPORT ---
 export const WorkflowBuilder = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const blueprintLoadedRef = useRef(false);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);

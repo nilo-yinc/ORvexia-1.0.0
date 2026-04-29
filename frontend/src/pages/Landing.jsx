@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import BlueprintGallery from '../components/blueprints/BlueprintGallery';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -224,6 +225,8 @@ const SystemSimulation = () => {
 
 export const Landing = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [0, -200]);
@@ -401,7 +404,13 @@ export const Landing = () => {
           </p>
         </div>
 
-        <BlueprintGallery onSelectBlueprint={(bp) => navigate('/login', { state: { blueprint: bp } })} />
+        <BlueprintGallery onSelectBlueprint={(bp) => {
+          if (isAuthenticated) {
+            navigate('/workflows/builder', { state: { blueprint: bp } });
+          } else {
+            navigate('/login', { state: { blueprint: bp } });
+          }
+        }} />
       </section>
 
       {/* --- FEATURES GRID --- */}

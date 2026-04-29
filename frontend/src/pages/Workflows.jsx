@@ -8,6 +8,7 @@ import {
   ChevronDown, ToggleLeft, ToggleRight
 } from "lucide-react";
 import { workflowApi, blueprintApi } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import BlueprintGallery from "../components/blueprints/BlueprintGallery";
 
 // App color map for visual previews
@@ -191,6 +192,7 @@ const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle, onShare })
 
 export const Workflows = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -245,6 +247,7 @@ export const Workflows = () => {
         name: workflow.name,
         description: workflow.description || `A powerful automation module combining ${workflow.nodes?.map(n => n.data?.label).join(', ')}.`,
         category: 'Community',
+        authorName: user?.name || 'ORvexia User',
         definition: {
           nodes: workflow.nodes,
           edges: workflow.edges
