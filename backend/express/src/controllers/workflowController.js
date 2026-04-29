@@ -289,12 +289,28 @@ const toggleTemplate = async (req, res) => {
             });
 
             const tags = (nodes || []).map(n => n.data?.app).filter(Boolean);
+            
+            const generateDescription = (nodesList) => {
+                const trigger = nodesList.find(n => String(n.data?.nodeType).toLowerCase() === 'trigger');
+                const actions = nodesList.filter(n => String(n.data?.nodeType).toLowerCase() === 'action' || String(n.data?.nodeType).toLowerCase() === 'ai agent').map(n => n.data?.app || n.data?.label);
+                const uniqueActions = [...new Set(actions)].filter(Boolean);
+                
+                const triggerName = trigger?.data?.app || trigger?.data?.label || 'external event';
+                
+                if (uniqueActions.length > 0) {
+                    const actionString = uniqueActions.length > 1 
+                        ? `${uniqueActions.slice(0, -1).join(', ')} and ${uniqueActions[uniqueActions.length - 1]}`
+                        : uniqueActions[0];
+                    return `Automated workflow triggered by ${triggerName}. Autonomously executes actions across ${actionString} to streamline system operations and data flow.`;
+                }
+                return `Automated ${triggerName} module for seamless system integration and orchestration.`;
+            };
 
             const blueprint = await Blueprint.create({
                 name: workflow.name,
-                description: workflow.description || `A powerful automation module combining ${(nodes || []).map(n => n.data?.label).join(', ')}.`,
+                description: workflow.description || generateDescription(nodes || []),
                 category: 'Community',
-                authorName: req.user.name || 'ORvexia User',
+                authorName: req.user.name || 'System Architect',
                 definition: { nodes: sanitizedNodes, edges: edges || [] },
                 tags: [...new Set(tags)] // Unique tags
             });
