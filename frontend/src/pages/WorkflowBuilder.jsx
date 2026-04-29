@@ -569,11 +569,17 @@ export const WorkflowBuilder = () => {
       // Check for Blueprint from Gallery
       if (location.state?.blueprint) {
         const bp = location.state.blueprint;
-        setWorkflowName(bp.name.toUpperCase());
-        const laidOut = layoutWorkflowNodes(bp.definition.nodes, bp.definition.edges);
-        setNodes(laidOut);
-        setEdges(bp.definition.edges);
-        // Clear state to prevent reload loop
+        const bpNodes = Array.isArray(bp.definition?.nodes) ? bp.definition.nodes : [];
+        const bpEdges = Array.isArray(bp.definition?.edges) ? bp.definition.edges : [];
+        // Re-apply auto-layout positions so nodes are visible
+        const positionedNodes = bpNodes.map((node, i) => ({
+          ...node,
+          position: node.position || { x: 150 + (i % 4) * 300, y: 200 + Math.floor(i / 4) * 200 },
+          type: node.type || 'custom',
+        }));
+        setWorkflowName(bp.name ? bp.name.toUpperCase() : 'BLUEPRINT_MODULE');
+        setNodes(positionedNodes);
+        setEdges(bpEdges);
         navigate(location.pathname, { replace: true, state: {} });
         setIsLoading(false);
         return;
@@ -613,14 +619,19 @@ export const WorkflowBuilder = () => {
         }
       }).catch(console.error).finally(() => setIsLoading(false));
     } else {
-      // Check for Blueprint from Gallery (New Workflow)
+      // Check for Blueprint from Gallery (New Workflow - no ID)
       if (location.state?.blueprint) {
         const bp = location.state.blueprint;
-        setWorkflowName(bp.name.toUpperCase());
-        const laidOut = layoutWorkflowNodes(bp.definition.nodes, bp.definition.edges);
-        setNodes(laidOut);
-        setEdges(bp.definition.edges);
-        // Clear state
+        const bpNodes = Array.isArray(bp.definition?.nodes) ? bp.definition.nodes : [];
+        const bpEdges = Array.isArray(bp.definition?.edges) ? bp.definition.edges : [];
+        const positionedNodes = bpNodes.map((node, i) => ({
+          ...node,
+          position: node.position || { x: 150 + (i % 4) * 300, y: 200 + Math.floor(i / 4) * 200 },
+          type: node.type || 'custom',
+        }));
+        setWorkflowName(bp.name ? bp.name.toUpperCase() : 'BLUEPRINT_MODULE');
+        setNodes(positionedNodes);
+        setEdges(bpEdges);
         navigate(location.pathname, { replace: true, state: {} });
         return;
       }
