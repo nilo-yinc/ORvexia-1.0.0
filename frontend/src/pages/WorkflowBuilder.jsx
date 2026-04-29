@@ -1295,6 +1295,10 @@ export const WorkflowBuilder = () => {
     setNodes((nds) => {
       const next = nds.map((n) => n.id === nodeId ? { ...n, data: newData } : n);
       saveHistory(next, edges);
+      // Sync selected node state to keep ConfigPanel fresh
+      if (selectedNode?.id === nodeId) {
+        setSelectedNode({ ...selectedNode, data: newData });
+      }
       return next;
     }); 
   };
