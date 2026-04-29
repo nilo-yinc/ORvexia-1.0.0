@@ -88,4 +88,15 @@ export const aiApi = {
   },
 };
 
+export const blueprintApi = {
+  list: async (params) => {
+    const response = await api.get('/blueprints', { params });
+    return response.data;
+  },
+  share: async (data) => {
+    const response = await api.post('/blueprints/share', data);
+    return response.data;
+  }
+};
+
 export default api;

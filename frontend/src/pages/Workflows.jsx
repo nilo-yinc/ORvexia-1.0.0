@@ -7,7 +7,7 @@ import {
   Settings, Zap, GitBranch, CheckCircle, XCircle, Loader2,
   ChevronDown, ToggleLeft, ToggleRight
 } from "lucide-react";
-import { workflowApi } from "../lib/api";
+import { workflowApi, blueprintApi } from "../lib/api";
 import BlueprintGallery from "../components/blueprints/BlueprintGallery";
 
 // App color map for visual previews
@@ -18,7 +18,7 @@ const appColors = {
   Start: '#FF5F1F', 'HTTP Request': '#FF5F1F', 'AI Agent': '#FF5F1F',
 };
 
-const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle }) => {
+const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle, onShare }) => {
   const [showMenu, setShowMenu] = useState(false);
   const status = workflow.status || (workflow.is_active ? 'active' : 'paused');
   const nodeLabels = (workflow.nodes || []).map(n => n.data?.label).filter(Boolean);
@@ -104,6 +104,10 @@ const WorkflowCard = ({ workflow, index, onClick, onDelete, onToggle }) => {
                 <button onClick={(e) => { e.stopPropagation(); onToggle(workflow._id, !workflow.is_active); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-white/60 hover:bg-white/5 uppercase tracking-wider">
                   {workflow.is_active ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                   {workflow.is_active ? 'Pause' : 'Activate'}
+                </button>
+                <div className="h-[1px] bg-white/5" />
+                <button onClick={(e) => { e.stopPropagation(); onShare(workflow); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-accent/80 hover:bg-accent/10 uppercase tracking-wider">
+                  <Share2 className="w-3 h-3" /> Add as Template
                 </button>
                 <div className="h-[1px] bg-white/5" />
                 <button onClick={(e) => { e.stopPropagation(); onDelete(workflow._id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-red-400/80 hover:bg-red-500/10 uppercase tracking-wider">
@@ -225,6 +229,25 @@ export const Workflows = () => {
     }
   };
 
+  const handleShare = async (workflow) => {
+    try {
+      await blueprintApi.share({
+        name: workflow.name,
+        description: workflow.description || `A powerful automation module combining ${workflow.nodes?.map(n => n.data?.label).join(', ')}.`,
+        category: 'Community',
+        definition: {
+          nodes: workflow.nodes,
+          edges: workflow.edges
+        },
+        tags: workflow.nodes?.map(n => n.data?.app).filter(Boolean) || []
+      });
+      alert("TEMPLATE_PUBLISHED: This module is now live in the System Library.");
+    } catch (err) {
+      console.error("Share failed:", err);
+      alert("SHARE_FAILED: Could not publish template.");
+    }
+  };
+
   const filteredWorkflows = workflows.filter(w => {
     const matchSearch = searchQuery === '' || (w.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchFilter = filter === 'all'
@@ -313,7 +336,7 @@ export const Workflows = () => {
             onClick={() => setActiveTab('library')}
             className={`pb-4 text-[11px] font-black uppercase tracking-[0.4em] transition-all relative ${activeTab === 'library' ? 'text-accent' : 'text-white/20 hover:text-white/40'}`}
           >
-            Global Library
+            System Library
             {activeTab === 'library' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 w-full h-[2px] bg-accent" />}
           </button>
         </div>
@@ -345,6 +368,7 @@ export const Workflows = () => {
                   onClick={() => navigate(`/workflows/builder/${workflow._id || workflow.id}`)}
                   onDelete={handleDelete}
                   onToggle={handleToggle}
+                  onShare={handleShare}
                 />
               ))}
 

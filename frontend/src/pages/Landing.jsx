@@ -393,10 +393,10 @@ export const Landing = () => {
             System Templates
           </motion.span>
           <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase">
-            GLOBAL <span className="text-accent italic">BLUEPRINTS.</span>
+            SYSTEM <span className="text-accent italic">BLUEPRINTS.</span>
           </h2>
           <p className="text-white/40 max-w-2xl mx-auto text-sm uppercase tracking-widest font-medium">
-            Deploy hard-coded power-trio workflows instantly. 
+            Deploy power-trio workflows instantly. 
             Connect Gmail, Slack, and Notion in one continuous neural flow.
           </p>
         </div>
