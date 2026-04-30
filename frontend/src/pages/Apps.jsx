@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { appsApi, API_BASE } from '../lib/api';
 import { AppLogos } from './AppLogos';
+import { useAuth } from '../context/AuthContext';
 
 const APP_CATEGORIES = ['ALL_APPS', 'GOOGLE', 'COMMUNICATION', 'PRODUCTIVITY', 'CALENDAR', 'BETA'];
 
@@ -127,7 +128,7 @@ const getAuthTokenQuery = () => {
 };
 
 // ---------- APP DETAIL PANEL ----------
-const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved }) => {
+const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => {
   if (!app) return null;
   const details = APP_DETAILS[app.key] || defaultDetails;
   const isGoogle = app.credentialMode === 'google_oauth' || app.key === 'gmail';
@@ -175,7 +176,24 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved }) => {
     }
   };
 
-  const handleUseTemplate = (template) => {
+  const handleUseTemplate = async (template) => {
+    const plan = user?.subscription?.plan || 'FREE';
+    
+    try {
+      const stats = await import('../lib/api').then(m => m.workflowApi.getStats());
+      const currentWorkflows = stats?.totalWorkflows || 0;
+      
+      if (plan === 'FREE' && currentWorkflows >= 1) {
+        alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to use templates.");
+        navigate("/home#pricing");
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to verify limits:", error);
+      alert("Could not verify limits. Please try again.");
+      return;
+    }
+
     const prompt = `Connect ${template.apps.join(' with ')}`;
     navigate('/workflows/builder', { state: { autoPrompt: prompt } });
   };
@@ -405,6 +423,7 @@ const AppCard = ({ app, onSelect }) => (
 // ---------- MAIN PAGE ----------
 export const Apps = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('ALL_APPS');
   const [apps, setApps] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
@@ -498,6 +517,7 @@ export const Apps = () => {
             onClose={() => setSelectedApp(null)}
             navigate={navigate}
             onConnectionSaved={loadApps}
+            user={user}
           />
         )}
       </AnimatePresence>

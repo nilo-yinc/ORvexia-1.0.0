@@ -137,17 +137,19 @@ export const Home = () => {
     
     // Check exact count from server to prevent bypass on fast clicks
     try {
-      const { workflowApi } = await import('../lib/api');
       const stats = await workflowApi.getStats();
       const currentWorkflows = stats?.totalWorkflows || totalWorkflows || 0;
 
       if (plan === 'FREE' && currentWorkflows >= 1) {
         alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
         navigate("/#pricing");
         return;
       }
     } catch (error) {
       console.error("Failed to verify subscription limits:", error);
+      alert("Could not verify your subscription limits. Please try again.");
+      return; // Do not allow bypass if API fails
     }
     
     navigate('/workflows/builder');

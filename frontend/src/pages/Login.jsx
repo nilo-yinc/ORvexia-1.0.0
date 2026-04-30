@@ -48,7 +48,26 @@ export const Login = () => {
     setLoading(true);
     setMessage('');
     try {
-      await login(email, password);
+      const authData = await login(email, password);
+      
+      // If navigating to builder with state (e.g. from clicking a template while logged out), check limits
+      if (location.state && (location.state.blueprint || location.state.template || location.state.autoPrompt)) {
+        const plan = authData.user?.subscription?.plan || 'FREE';
+        try {
+          const { workflowApi } = await import('../lib/api');
+          const stats = await workflowApi.getStats();
+          const currentWorkflows = stats?.totalWorkflows || 0;
+          
+          if (plan === 'FREE' && currentWorkflows >= 1) {
+            alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+            navigate("/home#pricing");
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to verify limits after login:", error);
+        }
+      }
+      
       navigate('/workflows/builder', { state: location.state });
     } catch (error) {
       console.error('Login error:', error);

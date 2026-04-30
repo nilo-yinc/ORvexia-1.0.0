@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { features, testimonials, pricingPlans } from '../utils/MockData';
 import PricingSection from '../components/PricingSection';
+import { workflowApi } from '../lib/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -450,7 +451,6 @@ export const Landing = () => {
           if (isAuthenticated) {
             const plan = user?.subscription?.plan || 'FREE';
             try {
-              const { workflowApi } = await import('../lib/api');
               const stats = await workflowApi.getStats();
               const currentWorkflows = stats?.totalWorkflows || 0;
               
@@ -461,6 +461,8 @@ export const Landing = () => {
               }
             } catch (error) {
               console.error("Failed to verify limits:", error);
+              alert("Could not verify your subscription limits. Please try again.");
+              return; // Do not allow bypass if API fails
             }
             navigate('/workflows/builder', { state: { blueprint: bp } });
           } else {

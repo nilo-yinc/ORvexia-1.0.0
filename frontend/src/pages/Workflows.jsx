@@ -200,11 +200,22 @@ export const Workflows = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all'); // all, active, draft
 
-  const handleCreateWorkflow = (stateData = {}) => {
+  const handleCreateWorkflow = async (stateData = {}) => {
     const plan = user?.subscription?.plan || 'FREE';
-    if (plan === 'FREE' && workflows.length >= 1) {
-      alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
-      navigate("/home#pricing");
+    
+    try {
+      const stats = await workflowApi.getStats();
+      const currentWorkflows = stats?.totalWorkflows || workflows.length || 0;
+      
+      if (plan === 'FREE' && currentWorkflows >= 1) {
+        alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+        navigate("/#pricing");
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to verify limits:", error);
+      alert("Could not verify your subscription limits. Please try again.");
       return;
     }
     

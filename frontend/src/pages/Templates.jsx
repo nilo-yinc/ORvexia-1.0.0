@@ -3,6 +3,7 @@ import { Search, Clock, Users, Terminal, Cpu, Layers, Box, Globe, Share2, Plus, 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { workflowApi } from '../lib/api';
 
 const workflowTemplates = [
   { id: 1, title: 'LEAD_GEN_AUTO_SYNC', description: 'Industrial capture and qualification logic for CRM injection.', category: 'Sales', apps: ['AI_LOGIC', 'CRM_LINK', 'MAIL_SYS'], uses: '15.8k', time: '5m', difficulty: 'BETA' },
@@ -100,17 +101,19 @@ export const Templates = () => {
     
     // Always check the exact count from the server to prevent bypass
     try {
-      const { workflowApi } = await import('../lib/api');
       const stats = await workflowApi.getStats();
       const currentWorkflows = stats?.totalWorkflows || 0;
       
       if (plan === 'FREE' && currentWorkflows >= 1) {
         alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
         navigate("/#pricing");
         return;
       }
     } catch (error) {
       console.error("Failed to verify subscription limits:", error);
+      alert("Could not verify your subscription limits. Please try again.");
+      return; // Do not allow bypass if API fails
     }
     
     navigate('/workflows/builder', { state: stateData });
