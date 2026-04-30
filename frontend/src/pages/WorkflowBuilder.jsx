@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import ReactFlow, {
   MiniMap, Controls, Background, useNodesState, useEdgesState,
   addEdge, BackgroundVariant, MarkerType, useReactFlow, ReactFlowProvider,
@@ -360,7 +360,7 @@ export const WorkflowBuilder = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const blueprintLoadedRef = useRef(false);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -764,6 +764,11 @@ export const WorkflowBuilder = () => {
   const onNodeClick = useCallback((_, node) => setSelectedNode(node), []);
 
   const handleSave = async () => {
+    if (isGuest) {
+      alert("Account required to save architectures. Please sign in to persist your workflows.");
+      navigate("/login");
+      return;
+    }
     setIsSaving(true);
     try {
       const result = await workflowApi.create({ name: workflowName, nodes, edges, triggerSlug });
@@ -976,7 +981,11 @@ export const WorkflowBuilder = () => {
 
       const response = await fetch(`${API_BASE}/api/ai/architect`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'x-guest-mode': isGuest ? 'true' : 'false'
+        },
         body: JSON.stringify({ prompt: userPrompt, currentNodes: nodes, currentEdges: edges, chatHistory })
       });
       const result = await response.json();
@@ -1446,6 +1455,13 @@ export const WorkflowBuilder = () => {
               <button type="submit" disabled={awaitingAuthResume} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-accent hover:text-white transition disabled:opacity-40">
                 <Send className="w-4 h-4" />
               </button>
+              {isGuest && (
+                <div className="absolute -top-6 left-0 right-0 text-center">
+                  <span className="text-[7px] font-black uppercase tracking-widest text-accent/60">
+                    GUEST_MODE: Chat history not saved. <Link to="/login" className="underline hover:text-accent">Sign in</Link> to persist.
+                  </span>
+                </div>
+              )}
             </form>
           </div>
         </div>

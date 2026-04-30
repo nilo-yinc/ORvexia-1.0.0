@@ -1037,7 +1037,9 @@ function matchTemplate(prompt, nextId, historyText = "") {
 
 exports.architect = async (req, res) => {
   try {
+    const isGuest = req.user?.id === 'guest';
     const { prompt, currentNodes, currentEdges, chatHistory } = req.body;
+
     const safeNodes = Array.isArray(currentNodes) ? currentNodes : [];
     const safeEdges = Array.isArray(currentEdges) ? currentEdges : [];
     const safeHistory = sanitizeHistory(chatHistory);
@@ -1194,6 +1196,9 @@ exports.getConversation = async (req, res) => {
   try {
     const { workflowId } = req.params;
     const ownerId = req.user.id;
+    if (ownerId === 'guest') {
+      return res.json({ status: "success", messages: [], isGuest: true });
+    }
 
     const isOwner = await verifyWorkflowOwnership(workflowId, ownerId);
     if (!isOwner) {
@@ -1220,6 +1225,9 @@ exports.saveConversation = async (req, res) => {
   try {
     const { workflowId } = req.params;
     const ownerId = req.user.id;
+    if (ownerId === 'guest') {
+      return res.json({ status: "success", message: "Stateless guest chat", isGuest: true });
+    }
     const sanitizedMessages = sanitizeConversationMessages(req.body?.messages || []);
 
     const isOwner = await verifyWorkflowOwnership(workflowId, ownerId);

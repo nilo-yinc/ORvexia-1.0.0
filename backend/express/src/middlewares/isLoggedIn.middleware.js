@@ -14,7 +14,12 @@ const isLoggedIn = (req, res, next) => {
     }
 
     // 2. check if token exists
-    if (!token) {
+    if (!token || token === 'null' || token === 'guest') {
+      // Allow 'guest' through but mark them
+      if (req.headers['x-guest-mode'] === 'true' || token === 'guest') {
+        req.user = { id: 'guest', role: 'guest', name: 'Guest User' };
+        return next();
+      }
       return res.status(401).json({
         status: false,
         message: "Unauthorized access - No token provided",
