@@ -53,7 +53,7 @@ exports.verifyPayment = async (req, res) => {
       const subscriptionExpiry = new Date();
       subscriptionExpiry.setDate(subscriptionExpiry.getDate() + 30); // 30 days for now
 
-      await User.findByIdAndUpdate(userId, {
+      const user = await User.findByIdAndUpdate(userId, {
         subscription: {
           plan: planId,
           status: 'ACTIVE',
@@ -61,7 +61,11 @@ exports.verifyPayment = async (req, res) => {
           expiryDate: subscriptionExpiry,
           razorpayPaymentId: razorpay_payment_id
         }
-      });
+      }, { new: true });
+
+      // Send professional notification email
+      const { sendSubscriptionEmail } = require('../services/notificationService');
+      await sendSubscriptionEmail(user.email, user.name, planId);
 
       res.json({ success: true, message: "Payment verified successfully" });
     } else {

@@ -16,8 +16,10 @@ const tiers = [
       { name: 'Standard Execution Speed', included: true },
       { name: 'Basic Analytics', included: true },
       { name: 'Community Support', included: true },
-      { name: 'Google App Integration', included: false },
-      { name: 'Premium AI Reasoning', included: false },
+      { name: 'Google Workspace', included: false },
+      { name: 'Slack & Discord', included: false },
+      { name: 'Notion & Database', included: false },
+      { name: 'AI Reasoning (Llama 3)', included: false },
     ],
     cta: 'Current Plan',
     popular: false,
@@ -27,14 +29,16 @@ const tiers = [
     name: 'Pro',
     target: 'Power Users',
     monthlyPrice: 99,
-    yearlyPrice: 891, // 25% off approx (99 * 12 * 0.75)
+    yearlyPrice: 891,
     features: [
       { name: 'Includes Basic Features', included: true },
-      { name: 'All Google Apps Integration', included: true },
-      { name: '50k Tasks/mo', included: true },
-      { name: 'Priority Support', included: true },
-      { name: 'Advanced Logic Nodes', included: true },
-      { name: 'Elite AI Reasoning', included: false },
+      { name: 'All Google Apps (Gmail, Drive, Calendar)', included: true },
+      { name: 'Slack, Discord, Trello', included: true },
+      { name: '50k Tasks/mo + Priority Speed', included: true },
+      { name: 'Advanced Logic & Conditionals', included: true },
+      { name: 'Custom Data Tables', included: true },
+      { name: 'Notion & WhatsApp', included: false },
+      { name: 'Agentic AI Reasoning', included: false },
     ],
     cta: 'Start 14-Day Trial',
     trial: true,
@@ -47,12 +51,14 @@ const tiers = [
     monthlyPrice: 199,
     yearlyPrice: 1791,
     features: [
-      { name: 'Includes All Features', included: true },
-      { name: 'Notion, Slack, WhatsApp', included: true },
-      { name: 'Unlimited Workflows', included: true },
-      { name: 'Agentic AI Reasoning (Llama 3)', included: true },
-      { name: 'Real-time Metrics', included: true },
-      { name: 'Custom Webhooks', included: true },
+      { name: 'Includes All Pro Features', included: true },
+      { name: 'Notion, WhatsApp, GitHub, LinkedIn', included: true },
+      { name: 'Unlimited Workflows & Nodes', included: true },
+      { name: 'Agentic AI Reasoning (Llama 3.1)', included: true },
+      { name: 'Real-time System Metrics & Logs', included: true },
+      { name: 'Custom Webhooks & API Access', included: true },
+      { name: 'White-label Architect', included: true },
+      { name: '24/7 Priority VIP Support', included: true },
     ],
     cta: 'Start 14-Day Trial',
     trial: true,
@@ -60,7 +66,7 @@ const tiers = [
   },
 ];
 
-const PricingCard = ({ tier, isYearly, index }) => {
+const PricingCard = ({ tier, isYearly, index, isCurrentPlan }) => {
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = React.useRef(null);
 
@@ -215,15 +221,18 @@ const PricingCard = ({ tier, isYearly, index }) => {
 
       <button
         onClick={handlePayment}
+        disabled={isCurrentPlan}
         className={`
           w-full py-4 font-black uppercase tracking-[0.2em] text-[10px] transition-all duration-300
-          ${tier.popular 
-            ? 'bg-accent text-white hover:bg-accent-dim shadow-glow-accent' 
-            : 'bg-white/5 text-white border border-white/10 hover:border-accent/40 hover:bg-accent/5'
+          ${isCurrentPlan
+            ? 'bg-accent-success/10 text-accent-success border border-accent-success/20 cursor-default'
+            : tier.popular 
+              ? 'bg-accent text-white hover:bg-accent-dim shadow-glow-accent' 
+              : 'bg-white/5 text-white border border-white/10 hover:border-accent/40 hover:bg-accent/5'
           }
         `}
       >
-        {tier.cta}
+        {isCurrentPlan ? 'Active Plan' : tier.cta}
       </button>
 
       {/* Decorative background elements */}
@@ -238,7 +247,22 @@ const PricingCard = ({ tier, isYearly, index }) => {
 
 const PricingSection = () => {
   const [isYearly, setIsYearly] = useState(false);
+  const [userPlan, setUserPlan] = useState('FREE');
   const toggleRef = React.useRef(null);
+
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      try {
+        const { data } = await api.get('/v1/auth/me');
+        if (data?.user?.subscription) {
+          setUserPlan(data.user.subscription.plan || 'FREE');
+        }
+      } catch (err) {
+        console.error('Failed to fetch user plan');
+      }
+    };
+    fetchUserPlan();
+  }, []);
 
   useEffect(() => {
     gsap.to(toggleRef.current, {
@@ -307,7 +331,13 @@ const PricingSection = () => {
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
           {tiers.map((tier, idx) => (
-            <PricingCard key={tier.id} tier={tier} isYearly={isYearly} index={idx} />
+            <PricingCard 
+              key={tier.id} 
+              tier={tier} 
+              isYearly={isYearly} 
+              index={idx} 
+              isCurrentPlan={userPlan === tier.id}
+            />
           ))}
         </div>
 

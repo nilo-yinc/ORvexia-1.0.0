@@ -316,6 +316,50 @@ export const Home = () => {
           {/* Sidebar / Quick Actions */}
           <div className="space-y-12">
 
+            {/* Subscription Status Card */}
+            <div className="bg-surface-1 border border-white/[0.05] overflow-hidden">
+               <div className="p-8 border-b border-white/[0.03] bg-white/[0.01]">
+                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/30">Membership Tier</h2>
+               </div>
+               <div className="p-8 space-y-8">
+                  <div className="flex items-center gap-4 p-4 bg-surface-2 border border-white/5 group hover:border-accent/30 transition-all">
+                     <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20">
+                        <Sparkles className="w-6 h-6 text-accent" />
+                     </div>
+                     <div>
+                        <p className="text-lg font-black text-white uppercase tracking-tighter">{user?.subscription?.plan || 'BASIC'}</p>
+                        <p className="text-[10px] font-mono text-white/40 uppercase">System Class: {user?.subscription?.status || 'UNRANKED'}</p>
+                     </div>
+                  </div>
+
+                  <div className="space-y-4">
+                     <div className="flex justify-between text-[10px] font-mono text-white/40 uppercase tracking-widest">
+                        <span>Trial Lifecycle</span>
+                        <span className="text-white">{(() => {
+                           if (!user?.subscription?.expiryDate) return 'LIFETIME';
+                           const diff = new Date(user.subscription.expiryDate) - new Date();
+                           const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                           return days > 0 ? `${days} DAYS LEFT` : 'EXPIRED';
+                        })()}</span>
+                     </div>
+                     <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: user?.subscription?.plan !== 'FREE' ? '70%' : '100%' }}
+                          className="h-full bg-accent" 
+                        />
+                     </div>
+                  </div>
+
+                  <button 
+                    onClick={() => navigate('/#pricing')}
+                    className="w-full py-4 bg-white/5 border border-white/10 text-[10px] font-black text-white hover:bg-accent hover:text-white hover:border-accent transition-all uppercase tracking-[0.3em]"
+                  >
+                    Manage Infrastructure
+                  </button>
+               </div>
+            </div>
+
             {/* Quick Actions Grid */}
             <div className="bg-surface-1 border border-white/[0.05] p-8">
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-8">Quick Protocols</h2>
