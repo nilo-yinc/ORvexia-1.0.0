@@ -31,11 +31,11 @@ const createWorkflow = async (req, res) => {
     if (!workflow) {
         const User = require("../models/user.models");
         const user = await User.findById(owner_id);
-        const plan = user?.subscription?.plan || 'FREE';
-        
+        const plan = (user?.subscription?.plan || 'FREE').toUpperCase();
+        const isPremium = ['PRO', 'ELITE'].includes(plan);
         const workflowCount = await Workflow.countDocuments({ owner_id });
         
-        if (plan === 'FREE' && workflowCount >= 1) {
+        if (!isPremium && workflowCount >= 1) {
             return res.status(403).json({ 
                 error: "SUBSCRIPTION_REQUIRED", 
                 message: "Basic plan is limited to 1 workflow. Upgrade to Pro or Elite for unlimited architectures." 

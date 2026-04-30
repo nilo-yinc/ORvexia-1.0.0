@@ -210,7 +210,7 @@ export const Workflows = () => {
       const isPremium = ['PRO', 'ELITE'].includes(plan);
       
       if (!isPremium && currentWorkflows >= 1) {
-        alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more architectures.");
+        alert("Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more architectures.");
         window.location.href = "/#pricing";
         return;
       }
@@ -303,8 +303,6 @@ export const Workflows = () => {
   const activeCount = workflows.filter(w => w.is_active).length;
   const draftCount = workflows.filter(w => !w.is_active).length;
 
-  const isOverLimit = !['PRO', 'ELITE'].includes((user?.subscription?.plan || 'FREE').toUpperCase()) && workflows.length >= 1;
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-obsidian text-white/20">
@@ -315,39 +313,7 @@ export const Workflows = () => {
   }
 
   return (
-    <div className="min-h-screen bg-obsidian p-8 space-y-10 relative">
-      {/* SUBSCRIPTION HARD GUARD */}
-      {isOverLimit && (
-        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-black border border-white/10 p-8 text-center space-y-6 shadow-2xl">
-            <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto border border-accent/20">
-              <Zap className="w-8 h-8 text-accent animate-pulse" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black uppercase tracking-tighter text-white">Plan Limit Reached</h2>
-              <p className="text-gray-500 text-[11px] font-mono leading-relaxed">
-                Your current Basic plan is limited to 1 workflow. You have {workflows.length} projects.
-                Please upgrade to Pro or Elite to create new architectures or use templates.
-              </p>
-            </div>
-            <div className="space-y-3 pt-4">
-              <button 
-                onClick={() => window.location.href = '/#pricing'}
-                className="w-full bg-accent text-black font-black py-4 uppercase text-[11px] tracking-widest hover:bg-white transition-all"
-              >
-                Upgrade to Pro
-              </button>
-              <button 
-                onClick={() => navigate('/')}
-                className="w-full text-white/40 font-bold py-2 text-[9px] uppercase tracking-[0.3em] hover:text-white transition-all"
-              >
-                Exit to Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+    <div className="min-h-screen bg-obsidian p-8 space-y-10">
       <div className="max-w-[1600px] mx-auto space-y-10">
 
         {/* Header */}
