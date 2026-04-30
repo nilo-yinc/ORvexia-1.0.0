@@ -182,7 +182,9 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => 
       const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
       const currentWorkflows = stats?.totalWorkflows || 0;
       
-      if (plan === 'FREE' && currentWorkflows >= 1) {
+      const isRestricted = ['FREE', 'BASIC'].includes(plan);
+
+      if (isRestricted && currentWorkflows >= 1) {
         alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to use templates.");
         navigate("/#pricing");
         return;

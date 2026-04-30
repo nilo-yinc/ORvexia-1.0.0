@@ -408,13 +408,14 @@ export const WorkflowBuilder = () => {
     if (!id && user) {
       const checkSubscriptionLimit = async () => {
         // Only enforce for FREE plan
-        const plan = user?.subscription?.plan || 'FREE';
-        if (plan !== 'FREE') return;
+        const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
+        const isRestricted = ['FREE', 'BASIC'].includes(plan);
+        if (!isRestricted) return;
 
         try {
           const stats = await workflowApi.getStats();
           if (stats && stats.totalWorkflows >= 1) {
-             alert("Subscription limit reached: Basic plan is limited to 1 workflow. Redirecting to pricing...");
+             alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more.");
              navigate("/#pricing");
           }
         } catch (err) {

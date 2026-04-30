@@ -206,7 +206,9 @@ export const Workflows = () => {
       const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
       const currentWorkflows = stats?.totalWorkflows || workflows.length || 0;
       
-      if (plan === 'FREE' && (stats?.totalWorkflows >= 1 || workflows?.length >= 1)) {
+      const isRestricted = ['FREE', 'BASIC'].includes(plan);
+      
+      if (isRestricted && currentWorkflows >= 1) {
         alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more.");
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
         navigate("/#pricing");
