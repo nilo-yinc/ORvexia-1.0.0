@@ -1,6 +1,7 @@
 const User = require("../models/user.models");
 const EmailService = require("../services/EmailService");
 const jwt = require("jsonwebtoken");
+const { buildSecurityPayload } = require("../utils/requestContext");
 
 // Register user controller
 const registerUser = async (req, res) => {
@@ -56,7 +57,9 @@ const registerUser = async (req, res) => {
     
 
     // 7. Fire webhook to send welcome email
-    EmailService.send(user.email, user.name, 'welcome');
+    EmailService.send(user.email, user.name, 'welcome', {
+      appUrl: process.env.CLIENT_URL,
+    });
 
     // 8. send response
     return res.status(201).json({
@@ -178,10 +181,7 @@ const login = async (req, res) => {
     res.cookie("jwtToken", jwtToken, cookieOptions);
 
     // Trigger security alert email asynchronously
-    EmailService.send(user.email, user.name, 'security', { 
-      ip: req.ip || 'Unknown', 
-      method: 'Password Auth' 
-    });
+    EmailService.send(user.email, user.name, 'security', buildSecurityPayload(req, 'Password Auth'));
 
     // 10. send response with token in body as fallback for cross-origin issues
     return res.status(200).json({
@@ -289,7 +289,15 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Send OTP via Webhook. Password reset must not claim success if email fails.
-    const emailResult = await EmailService.send(user.email, user.name, 'otp', { otp });
+    const emailResult = await EmailService.send(
+      user.email,
+      user.name,
+      'otp',
+      buildSecurityPayload(req, 'Password Reset Request', {
+        otp,
+        expiresIn: '10 minutes',
+      })
+    );
 
     if (!emailResult.ok) {
       user.resetPasswordToken = undefined;
@@ -337,7 +345,7 @@ const resetPassword = async (req, res) => {
     await user.save();
 
     // Trigger security email
-    EmailService.send(user.email, user.name, 'security', { ip: req.ip || 'Unknown', method: 'Password Reset via OTP' });
+    EmailService.send(user.email, user.name, 'security', buildSecurityPayload(req, 'Password Reset via OTP'));
 
     return res.status(200).json({ status: true, message: "Password updated successfully" });
   } catch (error) {

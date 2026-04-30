@@ -2,6 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const EmailService = require('../services/EmailService');
+const { buildSecurityPayload } = require('../utils/requestContext');
 const router = express.Router();
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -18,10 +19,7 @@ router.get('/github/callback',
     });
     
     // Send welcome email for new users (fire and forget)
-    EmailService.send(req.user.email, req.user.name, 'security', { 
-      ip: req.ip || 'Unknown', 
-      method: 'GitHub OAuth' 
-    });
+    EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'GitHub OAuth'));
     
     // Redirect with token so the frontend can store it
     res.redirect(`${clientUrl}/auth-callback?token=${token}`);
@@ -81,10 +79,7 @@ router.get('/google/callback', (req, res, next) => {
   });
   
   // Send security alert email
-  EmailService.send(req.user.email, req.user.name, 'security', { 
-    ip: req.ip || 'Unknown', 
-    method: 'Google OAuth' 
-  });
+  EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'Google OAuth'));
   
   const redirectPath = normalizeRedirectPath(req.query.state ? decodeURIComponent(req.query.state) : "");
   const redirectQuery = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : "";

@@ -1,5 +1,5 @@
 /**
- * ORVEXIA MASTER MAIL ENGINE (v3.1)
+ * ORVEXIA MASTER MAIL ENGINE (v3.2)
  *
  * Deploy in Google Apps Script:
  * 1. Deploy -> New deployment -> Web app
@@ -11,13 +11,13 @@
  * Add Script Property MAIL_WEBHOOK_SECRET and set the same value in backend .env.
  */
 const PLATFORM = "ORVEXIA";
-const ACCENT_COLOR = "#7c3aed";
+const ACCENT_COLOR = "#ff5f1f";
 
 function doGet() {
   return jsonResponse({
     status: "success",
     service: "orvexia-mail-engine",
-    version: "3.1",
+    version: "3.2",
   });
 }
 
@@ -70,11 +70,20 @@ function buildMessage(type, payload, name) {
   switch (type) {
     case "otp":
       return {
-        subject: escapeText(payload.otp) + " is your Verification Code",
+        subject: escapeText(payload.otp) + " is your ORVEXIA verification code",
         body: generateTemplate(
           "VERIFICATION_REQUIRED",
-          "Your security code is below. Do not share it.",
-          "<h1 style='font-size:48px; letter-spacing:10px; color:" + ACCENT_COLOR + "; margin:0;'>" + escapeText(payload.otp) + "</h1>"
+          "Verify your ORVEXIA request",
+          "<p style='margin:0 0 16px;color:#a1a1aa;'>Use this one-time code to continue. It expires in " + escapeText(payload.expiresIn || "10 minutes") + ".</p>" +
+          "<div style='font-size:48px; letter-spacing:10px; color:" + ACCENT_COLOR + "; font-weight:900; margin:10px 0 22px;'>" + escapeText(payload.otp) + "</div>" +
+          detailTable([
+            ["Request", payload.method || "Verification"],
+            ["IP address", payload.ip || "Unknown"],
+            ["Location", payload.location || "Approximate location unavailable"],
+            ["Device", payload.device || "Unknown device"],
+            ["Time", payload.time || new Date().toISOString()]
+          ]) +
+          "<p style='margin:18px 0 0;color:#a1a1aa;'>If you did not request this code, you can ignore this email or update your password.</p>"
         ),
       };
 
@@ -82,19 +91,29 @@ function buildMessage(type, payload, name) {
       return {
         subject: "Initialization Complete - Welcome to " + PLATFORM,
         body: generateTemplate(
-          "WELCOME_OPERATOR",
-          "Your neural link to ORvexia has been established.",
-          "<p>Hello " + escapeText(name) + ", you now have access to advanced agentic automation protocols.</p>"
+          "WELCOME_TO_ORVEXIA",
+          "Your automation workspace is ready",
+          "<p>Hello " + escapeText(name) + ", welcome to ORVEXIA.</p>" +
+          "<p>You can now connect Gmail, Slack, Notion, Google Calendar, Drive, Docs, Meet, GitHub, WhatsApp-ready webhooks, and more to build agentic workflows.</p>" +
+          "<p style='margin-top:22px;'><a href='" + escapeAttribute(payload.appUrl || "") + "' style='background:" + ACCENT_COLOR + ";color:#fff;text-decoration:none;padding:12px 18px;font-weight:800;'>Open ORVEXIA</a></p>"
         ),
       };
 
     case "security":
       return {
-        subject: "SECURITY_ALERT: New Authorization Detected",
+        subject: "ORVEXIA security alert: new authorization",
         body: generateTemplate(
           "SECURITY_ALERT",
-          "A new login was detected on your account.",
-          "<div style='background:#f1f1f1; padding:15px; color:#333; font-family:monospace;'>IP: " + escapeText(payload.ip || "Unknown") + "<br>METHOD: " + escapeText(payload.method || "Password") + "</div>"
+          "A new authorization was detected",
+          "<p style='margin:0 0 16px;color:#a1a1aa;'>We noticed a sign-in or account security action on your ORVEXIA account.</p>" +
+          detailTable([
+            ["Method", payload.method || "Password"],
+            ["IP address", payload.ip || "Unknown"],
+            ["Location", payload.location || "Approximate location unavailable"],
+            ["Device", payload.device || "Unknown device"],
+            ["Time", payload.time || new Date().toISOString()]
+          ]) +
+          "<p style='margin:18px 0 0;color:#a1a1aa;'>If this was you, no action is needed. If this was not you, reset your password immediately.</p>"
         ),
       };
 
@@ -103,8 +122,12 @@ function buildMessage(type, payload, name) {
         subject: "WORKFLOW_SUCCESS: " + escapeText(payload.workflowName || "Task Completed"),
         body: generateTemplate(
           "AUTOMATION_RESOLVED",
-          "Your workflow has executed successfully.",
-          "<p style='color:#22c55e;'>Status: SUCCESSFUL</p>"
+          "Your workflow executed successfully",
+          detailTable([
+            ["Workflow", payload.workflowName || "Task Completed"],
+            ["Status", "Successful"],
+            ["Time", payload.time || new Date().toISOString()]
+          ])
         ),
       };
 
@@ -113,8 +136,13 @@ function buildMessage(type, payload, name) {
         subject: "WORKFLOW_CRITICAL: " + escapeText(payload.workflowName || "Task Failed"),
         body: generateTemplate(
           "AUTOMATION_FAULT",
-          "A workflow has encountered a critical error.",
-          "<p style='color:#ef4444;'>Status: FAILED</p><p>Error: " + escapeText(payload.error || "Unknown Error") + "</p>"
+          "A workflow needs your attention",
+          detailTable([
+            ["Workflow", payload.workflowName || "Task Failed"],
+            ["Status", "Failed"],
+            ["Error", payload.error || "Unknown Error"],
+            ["Time", payload.time || new Date().toISOString()]
+          ])
         ),
       };
 
@@ -141,11 +169,28 @@ function buildMessage(type, payload, name) {
 }
 
 function generateTemplate(header, subheader, content) {
-  return "<div style='background:#050505; color:#ffffff; padding:40px; font-family:Arial,sans-serif; border:1px solid #1a1a1a;'>" +
+  return "<div style='margin:0;padding:36px;background:#030303;color:#ffffff;font-family:Arial,sans-serif;'>" +
+    "<div style='max-width:680px;margin:0 auto;background:#111113;border:1px solid #27272a;'>" +
+    "<div style='padding:28px 32px;border-bottom:1px solid #27272a;'>" +
+    "<div style='font-size:24px;font-weight:900;letter-spacing:.5px;'>ORV<span style='color:" + ACCENT_COLOR + ";'>EXIA</span></div>" +
+    "<div style='margin-top:8px;color:#a1a1aa;font-size:13px;'>Agentic workflow automation platform</div>" +
+    "</div>" +
+    "<div style='padding:32px;'>" +
     "<h3 style='color:" + ACCENT_COLOR + "; margin:0; letter-spacing:2px; font-size:12px;'>" + escapeText(header) + "</h3>" +
-    "<h1 style='margin:10px 0; font-size:24px; line-height:1.25;'>" + escapeText(subheader) + "</h1>" +
-    "<div style='margin:30px 0; padding:20px; border-left:4px solid " + ACCENT_COLOR + "; background:#0a0a0a;'>" + content + "</div>" +
-    "<p style='color:#777; font-size:10px; margin-top:50px;'>&copy; 2026 ORVEXIA // INTELLECTUAL AUTONOMY</p></div>";
+    "<h1 style='margin:10px 0 22px; font-size:30px; line-height:1.18;'>" + escapeText(subheader) + "</h1>" +
+    "<div style='font-size:15px;line-height:1.65;color:#f4f4f5;'>" + content + "</div>" +
+    "</div>" +
+    "<div style='padding:18px 32px;color:#71717a;font-size:12px;border-top:1px solid #27272a;'>Sent by ORVEXIA. Operational, security, and workflow notifications for your account.</div>" +
+    "</div></div>";
+}
+
+function detailTable(rows) {
+  var html = "<table style='width:100%;border-collapse:collapse;background:#18181b;border:1px solid #27272a;'>";
+  rows.forEach(function(row) {
+    html += "<tr><td style='width:36%;padding:12px;border-bottom:1px solid #27272a;color:#a1a1aa;font-size:12px;text-transform:uppercase;letter-spacing:1px;'>" + escapeText(row[0]) + "</td>" +
+      "<td style='padding:12px;border-bottom:1px solid #27272a;color:#ffffff;word-break:break-word;'>" + escapeText(row[1]) + "</td></tr>";
+  });
+  return html + "</table>";
 }
 
 function isValidEmail(email) {
@@ -159,6 +204,10 @@ function escapeText(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeText(value).replace(/`/g, "&#96;");
 }
 
 function jsonResponse(data) {
