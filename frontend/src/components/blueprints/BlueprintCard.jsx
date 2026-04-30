@@ -166,7 +166,10 @@ const appColors = {
       </div>
 
       <div className="mt-auto flex items-center justify-between">
-        <button className="w-full flex items-center justify-center gap-2 text-[10px] font-black tracking-widest uppercase text-white bg-white/5 border border-white/10 px-4 py-3 hover:bg-accent hover:border-accent transition-all active:scale-[0.98] group/btn">
+        <button 
+          onClick={(e) => { e.stopPropagation(); onUse(blueprint); }}
+          className="w-full flex items-center justify-center gap-2 text-[10px] font-black tracking-widest uppercase text-white bg-white/5 border border-white/10 px-4 py-3 hover:bg-accent hover:border-accent transition-all active:scale-[0.98] group/btn"
+        >
           Use Template <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
         </button>
       </div>
