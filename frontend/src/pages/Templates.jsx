@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { Search, Clock, Users, Terminal, Cpu, Layers, Box, Globe, Share2, Plus, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const workflowTemplates = [
   { id: 1, title: 'LEAD_GEN_AUTO_SYNC', description: 'Industrial capture and qualification logic for CRM injection.', category: 'Sales', apps: ['AI_LOGIC', 'CRM_LINK', 'MAIL_SYS'], uses: '15.8k', time: '5m', difficulty: 'BETA' },
@@ -89,8 +90,28 @@ const BlueprintCard = ({ template, index, onClick }) => (
 
 export const Templates = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('ALL_MODULES');
   const [searchQuery, setSearchQuery] = useState('');
+  const [totalWorkflows, setTotalWorkflows] = useState(0);
+
+  useEffect(() => {
+    import('../lib/api').then(({ workflowApi }) => {
+      workflowApi.getStats().then(stats => {
+        if (stats) setTotalWorkflows(stats.totalWorkflows || 0);
+      }).catch(() => {});
+    });
+  }, []);
+
+  const handleCreateWorkflow = (stateData = {}) => {
+    const plan = user?.subscription?.plan || 'FREE';
+    if (plan === 'FREE' && totalWorkflows >= 1) {
+      alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+      navigate("/home#pricing");
+      return;
+    }
+    navigate('/workflows/builder', { state: stateData });
+  };
 
   const filteredTemplates = workflowTemplates.filter(template => {
     const matchesCategory = selectedCategory === 'ALL_MODULES' || template.category.toUpperCase() === selectedCategory;
@@ -154,7 +175,7 @@ export const Templates = () => {
               key={template.id}
               template={template}
               index={idx}
-              onClick={() => navigate('/workflows/builder')}
+              onClick={() => handleCreateWorkflow({ template })}
             />
           ))}
         </div>

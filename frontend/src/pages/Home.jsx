@@ -130,6 +130,17 @@ export const Home = () => {
     { icon: CheckCircle2, label: 'Success Rate', value: '0%', trend: '...', isPositive: true },
     { icon: Zap, label: 'Resource Load', value: '...', trend: '...', isPositive: true },
   ]);
+  const [totalWorkflows, setTotalWorkflows] = React.useState(0);
+
+  const handleCreateWorkflow = () => {
+    const plan = user?.subscription?.plan || 'FREE';
+    if (plan === 'FREE' && totalWorkflows >= 1) {
+      alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+      navigate("/#pricing");
+      return;
+    }
+    navigate('/workflows/builder');
+  };
 
   const timeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -171,6 +182,7 @@ export const Home = () => {
         }
 
         if (statsData) {
+          setTotalWorkflows(statsData.totalWorkflows || 0);
           setStats([
             { 
               icon: Workflow, 
@@ -248,7 +260,7 @@ export const Home = () => {
                 <span className="text-[10px] font-black text-accent-success uppercase">Optimal</span>
               </div>
             </div>
-            <KineticButton primary onClick={() => navigate('/workflows/builder')}>
+            <KineticButton primary onClick={handleCreateWorkflow}>
               <Plus className="w-4 h-4" /> New Architecture
             </KineticButton>
           </div>

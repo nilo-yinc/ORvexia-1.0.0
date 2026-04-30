@@ -200,6 +200,19 @@ export const Workflows = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all'); // all, active, draft
 
+  const handleCreateWorkflow = (stateData = {}) => {
+    const plan = user?.subscription?.plan || 'FREE';
+    if (plan === 'FREE' && workflows.length >= 1) {
+      alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+      navigate("/home#pricing");
+      return;
+    }
+    
+    localStorage.removeItem("orvexia_workflow_draft_draft");
+    localStorage.removeItem("orvexia_copilot_messages_draft");
+    navigate("/workflows/builder", { state: stateData });
+  };
+
   useEffect(() => {
     fetchWorkflows();
   }, []);
@@ -308,11 +321,7 @@ export const Workflows = () => {
               />
             </div>
             <button
-              onClick={() => {
-                localStorage.removeItem("orvexia_workflow_draft_draft");
-                localStorage.removeItem("orvexia_copilot_messages_draft");
-                navigate("/workflows/builder");
-              }}
+              onClick={() => handleCreateWorkflow()}
               className="flex items-center gap-2 px-6 py-2.5 bg-accent hover:bg-accent-dim text-white text-[10px] font-black uppercase tracking-widest transition-all"
             >
               <Plus className="w-4 h-4" /> Create New Workflow
@@ -393,11 +402,7 @@ export const Workflows = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: filteredWorkflows.length * 0.05 }}
-                onClick={() => {
-                  localStorage.removeItem("orvexia_workflow_draft_draft");
-                  localStorage.removeItem("orvexia_copilot_messages_draft");
-                  navigate("/workflows/builder");
-                }}
+                onClick={() => handleCreateWorkflow()}
                 className="group relative bg-surface-1 border border-white/[0.03] border-dashed flex flex-col items-center justify-center p-12 cursor-pointer hover:border-accent/40 transition-all duration-300 min-h-[280px]"
               >
                 <div className="w-14 h-14 flex items-center justify-center bg-surface-2 border border-white/5 group-hover:bg-accent/10 group-hover:border-accent/30 transition-all mb-5">
@@ -414,7 +419,7 @@ export const Workflows = () => {
           </>
         ) : (
           <div className="py-10">
-            <BlueprintGallery onSelectBlueprint={(bp) => navigate("/workflows/builder", { state: { blueprint: bp } })} />
+            <BlueprintGallery onSelectBlueprint={(bp) => handleCreateWorkflow({ blueprint: bp })} />
           </div>
         )}
  
@@ -429,11 +434,7 @@ export const Workflows = () => {
               Create your first automation workflow to get started
             </p>
             <button
-              onClick={() => {
-                localStorage.removeItem("orvexia_workflow_draft_draft");
-                localStorage.removeItem("orvexia_copilot_messages_draft");
-                navigate("/workflows/builder");
-              }}
+              onClick={() => handleCreateWorkflow()}
               className="inline-flex items-center gap-2 px-8 py-3 bg-accent hover:bg-accent-dim text-white text-[10px] font-black uppercase tracking-widest transition-all"
             >
               <Zap className="w-4 h-4" /> Create Your First Workflow

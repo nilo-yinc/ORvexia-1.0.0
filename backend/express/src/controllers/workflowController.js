@@ -368,6 +368,7 @@ const getDashboardStats = async (req, res) => {
 
         res.json({
             activeWorkflows,
+            totalWorkflows: workflows.length,
             totalExecutions,
             successRate: `${successRate}%`,
             resourceLoad: 'Optimal' // This could be calculated from system metrics if needed
