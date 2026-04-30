@@ -37,6 +37,7 @@ import {
   FileText
 } from 'lucide-react';
 import { features, testimonials, pricingPlans } from '../utils/MockData';
+import PricingSection from '../components/PricingSection';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -447,6 +448,9 @@ export const Landing = () => {
         }} />
       </section>
 
+      {/* --- PRICING SECTION --- */}
+      <PricingSection />
+
       {/* --- KINETIC CTA --- */}
       <section className="py-60 px-8 relative">
         <div className="absolute inset-0 bg-accent/5 -z-10 skew-y-3" />
@@ -461,11 +465,11 @@ export const Landing = () => {
               <Terminal className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-6xl md:text-9xl font-black tracking-tighter leading-[0.8]">
-              READY TO <br /> <span className="text-accent underline decoration-4 underline-offset-8">ASCEND?</span>
+              START YOUR <br /> <span className="text-accent underline decoration-4 underline-offset-8">FREE TRIAL.</span>
             </h2>
             <div className="flex flex-col sm:flex-row gap-6">
               <KineticButton primary onClick={() => navigate('/signup')}>
-                Initialize Deployment
+                Initialize Trial Access
               </KineticButton>
               <button className="px-8 py-4 border border-white/10 font-bold uppercase tracking-widest text-[10px] hover:bg-white/5 transition-all">
                 Request System Access

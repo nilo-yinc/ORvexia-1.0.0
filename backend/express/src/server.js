@@ -16,6 +16,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo").default;
 const passport = require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const aiRoutes = require("./routes/ai.routes");
 
 const blueprintController = require('./controllers/blueprintController');
@@ -112,6 +113,7 @@ app.use('/api/apps', appsRouter);
 app.use("/api/v1/users", userRoutes);
 app.use('/api/blueprints', blueprintRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/payment', paymentRoutes);
 app.use("/api/ai", aiRoutes);
 
 const preferredPort = Number(process.env.PORT || 3000);

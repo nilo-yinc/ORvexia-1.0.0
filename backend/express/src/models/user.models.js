@@ -41,6 +41,14 @@ const userSchema = new mongoose.Schema(
     verificationTokenExpiry: Date,
     resetPasswordToken: String,
     resetPasswordTokenExpiry: Date,
+    subscription: {
+      plan: { type: String, enum: ['FREE', 'PRO', 'ELITE'], default: 'FREE' },
+      status: { type: String, enum: ['ACTIVE', 'EXPIRED', 'TRIAL'], default: 'FREE' },
+      startDate: { type: Date },
+      expiryDate: { type: Date },
+      razorpayPaymentId: { type: String },
+      isYearly: { type: Boolean, default: false }
+    },
   },
   { timestamps: true }
 );
