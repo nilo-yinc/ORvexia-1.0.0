@@ -190,6 +190,7 @@ const extractGmailBody = (payload) => {
 
 const extractEmailAddress = (value = "") => {
   const raw = String(value || "").trim();
+  if (raw.includes("{{") || raw.includes("}}")) return "";
   const match = raw.match(/<([^>]+)>/);
   return (match?.[1] || raw).trim();
 };
@@ -246,12 +247,19 @@ const sendGmailMessage = async (ownerId, { to, subject, body, threadId, inReplyT
     headers.push(`References: ${inReplyTo}`);
   }
   const raw = base64Url(`${headers.join("\r\n")}\r\n\r\n${body || ""}`);
-  const response = await GoogleService.request(ownerId, {
-    method: "POST",
-    url: "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
-    data: { raw, threadId },
-  });
-  return response.data;
+  try {
+    const response = await GoogleService.request(ownerId, {
+      method: "POST",
+      url: "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+      data: { raw, threadId },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("GMAIL SEND ERROR DETAILS:");
+    console.error("Payload data:", { to, subject, threadId, inReplyTo });
+    console.error("Google API Response:", JSON.stringify(error.response?.data, null, 2));
+    throw error;
+  }
 };
 
 const runFormatter = (config) => {
@@ -453,7 +461,8 @@ const runAction = async (node, config, context, workflow) => {
       }
 
       const finalThreadId = threadId || latest.threadId;
-      const finalTo = extractEmailAddress(toEmail || latest.from);
+      const extracted = extractEmailAddress(toEmail);
+      const finalTo = extracted || extractEmailAddress(trigger.Sender || trigger.from || latest?.from);
       const finalSubject = subject || `Re: ${latest.subject || "Your message"}`;
       const finalInReplyTo = messageId || latest?.messageId;
 
@@ -485,10 +494,15 @@ const runAction = async (node, config, context, workflow) => {
     }
 
     if (action === "send_google") {
+      let finalTo = extractEmailAddress(config.to);
+      if (!finalTo) {
+        const trigger = context.trigger || {};
+        finalTo = extractEmailAddress(trigger.Sender || trigger.from);
+      }
       const sent = await sendGmailMessage(workflow.owner_id, {
-        to: config.to,
+        to: finalTo,
         subject: config.subject,
-        body: config.body || config.message,
+        body: config.body || config.message || "Thanks for your message. We will follow up shortly.",
       });
       return { email_sent: true, Email_ID: sent.id, Thread_ID: sent.threadId, provider: "gmail_api" };
     }
