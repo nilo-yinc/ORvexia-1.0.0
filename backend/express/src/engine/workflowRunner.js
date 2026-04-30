@@ -440,22 +440,39 @@ const runAction = async (node, config, context, workflow) => {
     }
 
     if (action === "auto_reply") {
-      const latest = await getLatestGmailMessage(workflow.owner_id, config.query || "is:unread newer_than:7d");
-      if (!latest) return { found: false, replied: false, message: "No matching email found" };
-      const replyTo = extractEmailAddress(config.to || latest.from);
+      const trigger = context.trigger || {};
+      const threadId = config.threadId || trigger.Thread_ID || trigger.threadId;
+      const toEmail = config.to || trigger.Sender || trigger.from;
+      const subject = config.subject || (trigger.Subject ? `Re: ${trigger.Subject}` : null);
+      const messageId = trigger.Message_ID || trigger.messageId;
+
+      let latest = null;
+      if (!threadId || !toEmail) {
+        latest = await getLatestGmailMessage(workflow.owner_id, config.query || "is:unread newer_than:7d");
+        if (!latest) return { found: false, replied: false, message: "No matching email found for reply" };
+      }
+
+      const finalThreadId = threadId || latest.threadId;
+      const finalTo = extractEmailAddress(toEmail || latest.from);
+      const finalSubject = subject || `Re: ${latest.subject || "Your message"}`;
+      const finalInReplyTo = messageId || latest?.messageId;
+
       const sent = await sendGmailMessage(workflow.owner_id, {
-        to: replyTo,
-        subject: config.subject || `Re: ${latest.subject || "Your message"}`,
+        to: finalTo,
+        subject: finalSubject,
         body: config.body || config.message || "Thanks for your message. We will follow up shortly.",
-        threadId: latest.threadId,
-        inReplyTo: latest.messageId,
+        threadId: finalThreadId,
+        inReplyTo: finalInReplyTo
       });
       if (config.mark_read !== "false") {
-        await GoogleService.request(workflow.owner_id, {
-          method: "POST",
-          url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${latest.id}/modify`,
-          data: { removeLabelIds: ["UNREAD"] },
-        });
+        const messageIdToMark = trigger.Email_ID || trigger.id || latest?.id;
+        if (messageIdToMark) {
+          await GoogleService.request(workflow.owner_id, {
+            method: "POST",
+            url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageIdToMark}/modify`,
+            data: { removeLabelIds: ["UNREAD"] },
+          });
+        }
       }
       return {
         found: true,
