@@ -366,6 +366,7 @@ Return a concise result that downstream Gmail, Docs, or Slack steps can map with
         const result = await model.generateContent(prompt);
         return {
           Agent_Response: result.response.text(),
+          Result: result.response.text(),
           Confidence_Score: 0.8,
         };
       } catch (error) {
@@ -409,6 +410,7 @@ Return a concise result that downstream Gmail, Docs, or Slack steps can map with
   
   return {
     Agent_Response: response,
+    Result: response,
     Confidence_Score: 0.6,
   };
 };
@@ -789,6 +791,7 @@ const executeNode = async (node, context, workflow) => {
         Subject: latest.subject,
         Snippet: latest.snippet,
         Message_ID: latest.messageId,
+        Result: latest.body || latest.snippet || latest.subject
       };
     }
 

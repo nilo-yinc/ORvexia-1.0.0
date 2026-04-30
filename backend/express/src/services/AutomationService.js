@@ -24,6 +24,9 @@ class AutomationService {
   static async checkAndRunWorkflows() {
     // Find all active workflows
     const activeWorkflows = await Workflow.find({ is_active: true });
+    if (activeWorkflows.length > 0) {
+      console.log(`[Automation] Found ${activeWorkflows.length} active workflows to check.`);
+    }
     
     for (const workflow of activeWorkflows) {
       if (!workflow.active_version_id) continue;
@@ -38,6 +41,7 @@ class AutomationService {
       
       // Check if it's a Gmail trigger
       if (triggerNode.data?.app === 'Gmail' && triggerNode.data?.action === 'new_email') {
+        console.log(`[Automation] Match found: Gmail trigger in workflow "${workflow.name}"`);
         await this.processGmailTrigger(workflow, version, triggerNode);
       }
     }
