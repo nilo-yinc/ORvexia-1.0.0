@@ -40,7 +40,12 @@ class AutomationService {
       if (!triggerNode) continue;
       
       // Check if it's a Gmail trigger
-      if (triggerNode.data?.app === 'Gmail' && triggerNode.data?.action === 'new_email') {
+      const app = (triggerNode.data?.app || '').toLowerCase();
+      const label = (triggerNode.data?.label || '').toLowerCase();
+      const action = (triggerNode.data?.action || '').toLowerCase();
+      
+      if ((app === 'gmail' || label.includes('incoming email')) && 
+          (action === 'new_email' || action === 'undefined' || !action || label.includes('incoming email'))) {
         console.log(`[Automation] Match found: Gmail trigger in workflow "${workflow.name}"`);
         await this.processGmailTrigger(workflow, version, triggerNode);
       }

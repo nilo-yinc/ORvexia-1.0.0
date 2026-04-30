@@ -21,7 +21,7 @@ const getNodeKind = (node) => {
   if (label === "formatter") return "formatter";
   if (label === "delay") return "delay";
   if (label === "evaluate" || label === "condition" || label === "if") return "evaluate";
-  if (label === "ai agent" || label === "ai request" || label === "create with ai") return "ai";
+  if (label === "ai agent" || label === "ai request" || label === "create with ai" || label === "generate reply") return "ai";
   if (label === "output") return "output";
   return "action";
 };
@@ -420,7 +420,7 @@ const runAction = async (node, config, context, workflow) => {
 
   if (label === "http request") return runHttpAction(config);
 
-  if (label === "gmail") {
+  if (label === "gmail" || label === "send automated reply") {
     const inferredAction = config.to ? "send_google" : "auto_reply";
     const action = String(config.action || inferredAction).toLowerCase();
 
@@ -769,7 +769,7 @@ const executeNode = async (node, context, workflow) => {
       };
     }
 
-    if (label === "gmail") {
+    if (label === "gmail" || label === "incoming email") {
       const latest = await getLatestGmailMessage(workflow.owner_id, config.query || "is:unread newer_than:15m");
       if (!latest) return { triggered: false, skipped: true, reason: "No new Gmail email found" };
 
