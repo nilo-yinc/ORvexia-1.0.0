@@ -449,20 +449,20 @@ export const Landing = () => {
 
         <BlueprintGallery onSelectBlueprint={async (bp) => {
           if (isAuthenticated) {
-            const plan = user?.subscription?.plan || 'FREE';
             try {
               const stats = await workflowApi.getStats();
+              const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
               const currentWorkflows = stats?.totalWorkflows || 0;
               
               if (plan === 'FREE' && currentWorkflows >= 1) {
-                alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to use this template.");
+                alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to use this template.");
                 document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
                 return;
               }
             } catch (error) {
               console.error("Failed to verify limits:", error);
               alert("Could not verify your subscription limits. Please try again.");
-              return; // Do not allow bypass if API fails
+              return;
             }
             navigate('/workflows/builder', { state: { blueprint: bp } });
           } else {

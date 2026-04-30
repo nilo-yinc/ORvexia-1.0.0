@@ -97,15 +97,13 @@ export const Templates = () => {
   const [totalWorkflows, setTotalWorkflows] = useState(0);
 
   const handleCreateWorkflow = async (stateData = {}) => {
-    const plan = user?.subscription?.plan || 'FREE';
-    
-    // Always check the exact count from the server to prevent bypass
     try {
       const stats = await workflowApi.getStats();
+      const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
       const currentWorkflows = stats?.totalWorkflows || 0;
       
       if (plan === 'FREE' && currentWorkflows >= 1) {
-        alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+        alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more architectures.");
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
         navigate("/#pricing");
         return;
@@ -113,7 +111,7 @@ export const Templates = () => {
     } catch (error) {
       console.error("Failed to verify subscription limits:", error);
       alert("Could not verify your subscription limits. Please try again.");
-      return; // Do not allow bypass if API fails
+      return;
     }
     
     navigate('/workflows/builder', { state: stateData });

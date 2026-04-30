@@ -15,10 +15,8 @@ import {
   Terminal, Shield, Activity, Cpu, Filter
 } from "lucide-react";
 import { io } from "socket.io-client";
-import { workflowApi } from "../lib/api";
-import { API_BASE } from "../lib/api";
-import { appsApi } from "../lib/api";
-import { aiApi } from "../lib/api";
+import { workflowApi, API_BASE, appsApi, aiApi } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import CustomNode from "../components/canvas/CustomNode";
 import CustomEdge from "../components/canvas/CustomEdge";
 import { ActivityPalette } from "../components/canvas/ActivityPalette";
@@ -362,6 +360,7 @@ export const WorkflowBuilder = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const blueprintLoadedRef = useRef(false);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -403,6 +402,28 @@ export const WorkflowBuilder = () => {
   const conversationSaveTimerRef = useRef(null);
   const activeMessageStorageKey = `${COPILOT_MESSAGES_PREFIX}_${id || "draft"}`;
   const activeDraftStorageKey = `${WORKFLOW_DRAFT_PREFIX}_${id || "draft"}`;
+  
+  // SUBSCRIPTION GUARD: Check limits for NEW workflows
+  useEffect(() => {
+    if (!id && user) {
+      const checkSubscriptionLimit = async () => {
+        // Only enforce for FREE plan
+        const plan = user?.subscription?.plan || 'FREE';
+        if (plan !== 'FREE') return;
+
+        try {
+          const stats = await workflowApi.getStats();
+          if (stats && stats.totalWorkflows >= 1) {
+             alert("Subscription limit reached: Basic plan is limited to 1 workflow. Redirecting to pricing...");
+             navigate("/#pricing");
+          }
+        } catch (err) {
+          console.error("Subscription check failed:", err);
+        }
+      };
+      checkSubscriptionLimit();
+    }
+  }, [id, user, navigate]);
 
   useEffect(() => {
     const persisted = localStorage.getItem(activeMessageStorageKey);

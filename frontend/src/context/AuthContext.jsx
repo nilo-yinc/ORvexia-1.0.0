@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }) => {
           email: u.email,
           avatar: u.avatar || null,
           role: u.role || 'user',
+          subscription: u.subscription || { plan: 'FREE', status: 'ACTIVE' },
           provider: u.googleId ? 'google' : u.githubId ? 'github' : 'local',
         });
         setLoading(false);

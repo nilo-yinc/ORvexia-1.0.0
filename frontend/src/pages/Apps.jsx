@@ -177,20 +177,19 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => 
   };
 
   const handleUseTemplate = async (template) => {
-    const plan = user?.subscription?.plan || 'FREE';
-    
     try {
       const stats = await import('../lib/api').then(m => m.workflowApi.getStats());
+      const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
       const currentWorkflows = stats?.totalWorkflows || 0;
       
       if (plan === 'FREE' && currentWorkflows >= 1) {
-        alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to use templates.");
-        navigate("/home#pricing");
+        alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to use templates.");
+        navigate("/#pricing");
         return;
       }
     } catch (error) {
       console.error("Failed to verify limits:", error);
-      alert("Could not verify limits. Please try again.");
+      alert("Could not verify your subscription limits. Please try again.");
       return;
     }
 
