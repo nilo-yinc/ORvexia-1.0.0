@@ -407,15 +407,14 @@ export const WorkflowBuilder = () => {
   useEffect(() => {
     if (!id && user) {
       const checkSubscriptionLimit = async () => {
-        // Only enforce for FREE plan
-        const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
-        const isRestricted = ['FREE', 'BASIC'].includes(plan);
-        if (!isRestricted) return;
+        const plan = String(user?.subscription?.plan || user?.plan || 'FREE').toUpperCase();
+        const isPremium = ['PRO', 'ELITE'].includes(plan);
+        if (isPremium) return;
 
         try {
           const stats = await workflowApi.getStats();
           if (stats && stats.totalWorkflows >= 1) {
-             alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more.");
+             alert("Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more architectures.");
              navigate("/#pricing");
           }
         } catch (err) {

@@ -179,13 +179,13 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => 
   const handleUseTemplate = async (template) => {
     try {
       const stats = await import('../lib/api').then(m => m.workflowApi.getStats());
-      const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
+      const plan = String(user?.subscription?.plan || user?.plan || 'FREE').toUpperCase();
       const currentWorkflows = stats?.totalWorkflows || 0;
       
-      const isRestricted = ['FREE', 'BASIC'].includes(plan);
+      const isPremium = ['PRO', 'ELITE'].includes(plan);
 
-      if (isRestricted && currentWorkflows >= 1) {
-        alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to use templates.");
+      if (!isPremium && currentWorkflows >= 1) {
+        alert("Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to use templates.");
         navigate("/#pricing");
         return;
       }

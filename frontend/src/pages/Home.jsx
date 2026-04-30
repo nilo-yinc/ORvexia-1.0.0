@@ -135,13 +135,13 @@ export const Home = () => {
   const handleCreateWorkflow = async () => {
     try {
       const stats = await workflowApi.getStats();
-      const plan = String(user?.subscription?.plan || 'FREE').toUpperCase();
-      const currentWorkflows = stats?.totalWorkflows || totalWorkflows || 0;
+      const plan = String(user?.subscription?.plan || user?.plan || 'FREE').toUpperCase();
+      const currentWorkflows = Math.max(stats?.totalWorkflows || 0, totalWorkflows || 0);
 
-      const isRestricted = ['FREE', 'BASIC'].includes(plan);
+      const isPremium = ['PRO', 'ELITE'].includes(plan);
 
-      if (isRestricted && currentWorkflows >= 1) {
-        alert("Your current Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more architectures.");
+      if (!isPremium && currentWorkflows >= 1) {
+        alert("Basic plan is limited to 1 workflow. Please upgrade to Pro or Elite to create more architectures.");
         document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
         navigate("/#pricing");
         return;
