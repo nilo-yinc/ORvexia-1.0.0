@@ -27,7 +27,7 @@ const createWorkflow = async (req, res) => {
         workflow = await Workflow.findOne({ triggerSlug });
     }
 
-    // --- PLAN LIMIT CHECK ---
+    // Make sure basic users don't go over the 1 workflow limit
     if (!workflow) {
         const User = require("../models/user.models");
         const user = await User.findById(owner_id);
@@ -42,7 +42,6 @@ const createWorkflow = async (req, res) => {
             });
         }
     }
-    // ------------------------
 
     if (!workflow) {
       workflow = await Workflow.create({
@@ -133,14 +132,6 @@ const getWorkflowById = async (req, res) => {
         if (String(workflow.owner_id) !== String(req.user.id)) {
             return res.status(403).json({ error: "You do not own this workflow" });
         }
-
-        // Step B: Find the Logic (Nodes & Edges)
-        // We check if there is an active version pointer.
-        let flowData = { nodes: [], edges: [] };
-
-        if (workflow.active_version_id) {
-            const activeVersion = await WorkflowVersion.findById(workflow.active_version_id);
-            if (activeVersion) {
                 // Return the definition so React Flow can draw it
                 flowData = activeVersion.definition; 
             }
