@@ -162,7 +162,12 @@ const PricingCard = ({ tier, isYearly, index, isCurrentPlan }) => {
       paymentObject.open();
     } catch (error) {
       console.error('Payment Initiation Failed:', error);
-      alert('Could not initiate payment. Please login first.');
+      if (error.response?.status === 401) {
+        alert('AUTHENTICATION_REQUIRED: Please login to deploy infrastructure.');
+        window.location.href = '/login';
+      } else {
+        alert('Could not initiate payment. Please check your connection.');
+      }
     }
   };
 
@@ -256,9 +261,12 @@ const PricingSection = () => {
         const { data } = await api.get('/v1/auth/me');
         if (data?.user?.subscription) {
           setUserPlan(data.user.subscription.plan || 'FREE');
+        } else {
+          setUserPlan('FREE'); // Logged in but no sub object? Default to FREE
         }
       } catch (err) {
         console.error('Failed to fetch user plan');
+        setUserPlan(null); // Not logged in or error
       }
     };
     fetchUserPlan();

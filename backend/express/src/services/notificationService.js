@@ -3,14 +3,14 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
   },
 });
 
 const sendSubscriptionEmail = async (userEmail, userName, planName) => {
   const mailOptions = {
-    from: `"ORvexia Infrastructure" <${process.env.EMAIL_USER}>`,
+    from: `"ORvexia Infrastructure" <${process.env.MAIL_USER}>`,
     to: userEmail,
     subject: `[SYSTEM_NOTIFICATION] ${planName} Plan Activation Success`,
     html: `

@@ -227,10 +227,9 @@ const getProfile = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email,
-        avatar: user.avatar || null,
         isVerified: user.isVerified,
         role: user.role,
+        subscription: user.subscription || { plan: 'FREE', status: 'ACTIVE' },
       },
     });
   } catch (error) {

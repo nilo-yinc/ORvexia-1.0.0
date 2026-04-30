@@ -15,6 +15,12 @@ const createWorkflow = async (req, res) => {
 
     // A. Find or Create the "Container" (Workflow)
     // Try to find by slug if provided, OR by name/owner? 
+
+    // Generate slug if not provided
+    const slug = triggerSlug || crypto.randomBytes(8).toString('hex');
+
+    // A. Find or Create the "Container" (Workflow)
+    // Try to find by slug if provided, OR by name/owner? 
     // For now, let's rely on slug if provided, otherwise create new.
     // If updating, the frontend should ideally send the slug or ID. 
     // But here we are simplifying: 
@@ -25,6 +31,23 @@ const createWorkflow = async (req, res) => {
     if (triggerSlug) {
         workflow = await Workflow.findOne({ triggerSlug });
     }
+
+    // --- PLAN LIMIT CHECK ---
+    if (!workflow) {
+        const User = require("../models/user.models");
+        const user = await User.findById(owner_id);
+        const plan = user?.subscription?.plan || 'FREE';
+        
+        const workflowCount = await Workflow.countDocuments({ owner_id });
+        
+        if (plan === 'FREE' && workflowCount >= 1) {
+            return res.status(403).json({ 
+                error: "SUBSCRIPTION_REQUIRED", 
+                message: "Basic plan is limited to 1 workflow. Upgrade to Pro or Elite for unlimited architectures." 
+            });
+        }
+    }
+    // ------------------------
 
     if (!workflow) {
       workflow = await Workflow.create({

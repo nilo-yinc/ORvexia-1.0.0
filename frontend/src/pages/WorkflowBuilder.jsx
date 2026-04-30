@@ -759,7 +759,15 @@ export const WorkflowBuilder = () => {
           navigate(`/workflows/builder/${result.workflowId}`, { replace: true }); 
         }
       }
-    } catch (e) { console.error(e); } finally { setIsSaving(false); }
+    } catch (e) { 
+      console.error(e);
+      if (e.response?.status === 403 && e.response?.data?.error === 'SUBSCRIPTION_REQUIRED') {
+        alert(e.response.data.message);
+        navigate('/#pricing');
+      } else {
+        alert('CRITICAL_SAVE_FAILURE: Could not stabilize architecture nodes.');
+      }
+    } finally { setIsSaving(false); }
   };
   
   const handleRun = async () => {
