@@ -149,7 +149,10 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => 
     setSaveMessage('');
   }, [app.key]);
 
+  const isGuest = user?.role === 'guest';
+
   const getConnectUrl = () => {
+    if (isGuest) return null;
     if (isGoogle || app.key === 'gmail') return `${API_BASE}/api/v1/auth/google?redirect=${encodeURIComponent('/apps')}`;
     if (isSlack) return `${API_BASE}/api/apps/slack/connect?redirect=${encodeURIComponent('/apps')}${authTokenQuery}`;
     if (isNotion) return `${API_BASE}/api/apps/notion/connect?redirect=${encodeURIComponent('/apps')}${authTokenQuery}`;
@@ -159,6 +162,11 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => 
 
   const handleSaveCredentials = async (event) => {
     event.preventDefault();
+    if (isGuest) {
+      alert("Guest mode is for viewing only. Please sign in to connect your own accounts.");
+      navigate('/login');
+      return;
+    }
     if (!hasManualCredentials) return;
 
     setIsSaving(true);
@@ -243,19 +251,24 @@ const AppDetailPanel = ({ app, onClose, navigate, onConnectionSaved, user }) => 
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {getConnectUrl() && (
-                <a
-                  href={getConnectUrl()}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-[9px] font-black uppercase tracking-widest transition-all ${
-                    app.connected
-                      ? 'bg-white/5 border border-white/10 text-white/60 hover:border-accent/40 hover:text-white'
-                      : 'bg-accent text-white hover:bg-accent-dim'
-                  }`}
-                >
-                  {app.connected ? <RefreshCw className="w-3 h-3" /> : <LogIn className="w-3 h-3" />}
-                  {app.connected ? 'Change Account' : 'Sign In & Connect'}
-                </a>
-              )}
+              <button
+                onClick={(e) => {
+                  if (isGuest) {
+                    alert("Guest mode is for viewing only. Please sign in to connect your own accounts.");
+                    navigate('/login');
+                    return;
+                  }
+                  if (getConnectUrl()) window.location.href = getConnectUrl();
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 text-[9px] font-black uppercase tracking-widest transition-all ${
+                  app.connected
+                    ? 'bg-white/5 border border-white/10 text-white/60 hover:border-accent/40 hover:text-white'
+                    : 'bg-accent text-white hover:bg-accent-dim'
+                }`}
+              >
+                {app.connected ? <RefreshCw className="w-3 h-3" /> : <LogIn className="w-3 h-3" />}
+                {app.connected ? 'Change Account' : 'Sign In & Connect'}
+              </button>
               {hasManualCredentials && (
                 <span className="px-3 py-1.5 bg-white/5 border border-white/10 text-[8px] font-black uppercase tracking-widest text-white/50">
                   Manual Setup

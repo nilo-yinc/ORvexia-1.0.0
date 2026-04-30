@@ -34,7 +34,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const [view, setView] = useState('login'); // 'login' | 'forgot_email' | 'forgot_otp'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -351,7 +351,10 @@ export const Login = () => {
                 </div>
 
                 <button 
-                  onClick={() => navigate('/home')}
+                  onClick={() => {
+                    loginAsGuest();
+                    navigate('/home');
+                  }}
                   className="w-full mt-4 py-3 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white"
                 >
                   Continue as Guest
