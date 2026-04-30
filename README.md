@@ -25,13 +25,11 @@ Our platform leverages **LangGraph** and **Google Gemini** to act as a "Senior W
 
 ## 🖼️ Platform Experience
 
-<p align="center">
-  <img src="https://via.placeholder.com/1000x560.png?text=ORvexia+Platform+Architecture+Preview" alt="ORvexia Platform" width="100%" />
-</p>
+<img width="1919" height="997" alt="image" src="https://github.com/user-attachments/assets/eb275211-4033-4639-84b4-e089dcf66a75" />
 
-<p align="center">
-  <em>(Space for High-Resolution Dashboard & Builder Screenshots)</em>
-</p>
+<img width="1919" height="990" alt="image" src="https://github.com/user-attachments/assets/43a4af51-95d7-4ebb-ab0e-807d05918b96" />
+
+
 
 ---
 
