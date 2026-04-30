@@ -95,21 +95,24 @@ export const Templates = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [totalWorkflows, setTotalWorkflows] = useState(0);
 
-  useEffect(() => {
-    import('../lib/api').then(({ workflowApi }) => {
-      workflowApi.getStats().then(stats => {
-        if (stats) setTotalWorkflows(stats.totalWorkflows || 0);
-      }).catch(() => {});
-    });
-  }, []);
-
-  const handleCreateWorkflow = (stateData = {}) => {
+  const handleCreateWorkflow = async (stateData = {}) => {
     const plan = user?.subscription?.plan || 'FREE';
-    if (plan === 'FREE' && totalWorkflows >= 1) {
-      alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
-      navigate("/home#pricing");
-      return;
+    
+    // Always check the exact count from the server to prevent bypass
+    try {
+      const { workflowApi } = await import('../lib/api');
+      const stats = await workflowApi.getStats();
+      const currentWorkflows = stats?.totalWorkflows || 0;
+      
+      if (plan === 'FREE' && currentWorkflows >= 1) {
+        alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+        navigate("/#pricing");
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to verify subscription limits:", error);
     }
+    
     navigate('/workflows/builder', { state: stateData });
   };
 

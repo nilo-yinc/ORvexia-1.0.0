@@ -132,13 +132,24 @@ export const Home = () => {
   ]);
   const [totalWorkflows, setTotalWorkflows] = React.useState(0);
 
-  const handleCreateWorkflow = () => {
+  const handleCreateWorkflow = async () => {
     const plan = user?.subscription?.plan || 'FREE';
-    if (plan === 'FREE' && totalWorkflows >= 1) {
-      alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
-      navigate("/#pricing");
-      return;
+    
+    // Check exact count from server to prevent bypass on fast clicks
+    try {
+      const { workflowApi } = await import('../lib/api');
+      const stats = await workflowApi.getStats();
+      const currentWorkflows = stats?.totalWorkflows || totalWorkflows || 0;
+
+      if (plan === 'FREE' && currentWorkflows >= 1) {
+        alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to create more architectures.");
+        navigate("/#pricing");
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to verify subscription limits:", error);
     }
+    
     navigate('/workflows/builder');
   };
 
