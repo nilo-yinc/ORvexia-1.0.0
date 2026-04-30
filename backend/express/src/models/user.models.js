@@ -54,14 +54,19 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre("save", async function () {
-  // If password is not modified, just return (promise resolves automatically)
-  if (!this.isModified("password")) {
-    return;
+userSchema.pre("save", async function (next) {
+  // If password is not modified or is missing (SSO users), just return
+  if (!this.isModified("password") || !this.password) {
+    return next();
   }
   
-  // Hash the password
-  this.password = await bcrypt.hash(this.password, 10);
+  try {
+    // Hash the password
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Compare password method

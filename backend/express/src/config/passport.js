@@ -35,12 +35,13 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
           // Check if email already exists
           const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : `${profile.username}@github.com`;
           let existingUser = await User.findOne({ email });
+          const avatarUrl = profile.photos && profile.photos.length > 0 ? profile.photos[0].value : null;
 
           if (existingUser) {
             // Merge account
             existingUser.githubId = profile.id;
             existingUser.githubUsername = profile.username;
-            existingUser.avatar = profile.photos && profile.photos[0].value;
+            existingUser.avatar = avatarUrl;
             existingUser.githubAccessToken = accessToken; // SAVE TOKEN
             await existingUser.save();
             return done(null, existingUser);
@@ -51,7 +52,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
               email: email,
               githubId: profile.id,
               githubUsername: profile.username,
-              avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+              avatar: avatarUrl,
               githubAccessToken: accessToken, // SAVE TOKEN
               // No password needed
             });
@@ -80,6 +81,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     async function(accessToken, refreshToken, profile, done) {
       try {
         let user = await User.findOne({ googleId: profile.id });
+        const avatarUrl = profile.photos && profile.photos.length > 0 ? profile.photos[0].value : null;
 
         if (!user) {
           const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
@@ -87,7 +89,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
           if (existingUser) {
             existingUser.googleId = profile.id;
-            existingUser.avatar = profile.photos && profile.photos[0].value;
+            existingUser.avatar = avatarUrl;
             existingUser.googleAccessToken = accessToken; // SAVE TOKEN
             if (refreshToken) existingUser.googleRefreshToken = refreshToken;
             await existingUser.save();
@@ -97,7 +99,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               name: profile.displayName,
               email: email,
               googleId: profile.id,
-              avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+              avatar: avatarUrl,
               googleAccessToken: accessToken, // SAVE TOKEN
               googleRefreshToken: refreshToken || null,
             });
@@ -105,6 +107,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           }
         } else {
           user.googleAccessToken = accessToken;
+          user.avatar = avatarUrl;
           if (refreshToken) user.googleRefreshToken = refreshToken;
           await user.save();
           return done(null, user);

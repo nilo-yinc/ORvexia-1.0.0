@@ -29,18 +29,33 @@ router.get('/github/callback', (req, res, next) => {
   passport.authenticate('github', { 
     callbackURL,
     failureRedirect: `${clientUrl}/login?error=auth_failed` 
-  })(req, res, next);
-}, function(req, res) {
-  // Generate JWT for the OAuth user
-  const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY || '24h',
+  })(req, res, (err) => {
+    if (err) {
+      console.error('[GitHubOAuth] Authentication Error:', err);
+      return res.status(500).json({ error: 'Authentication failed', details: err.message, stack: err.stack });
+    }
+    next();
   });
-  
-  // Send welcome email
-  EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'GitHub OAuth'));
-  
-  // Redirect with token
-  res.redirect(`${clientUrl}/auth-callback?token=${token}`);
+}, async function(req, res) {
+  try {
+    // Generate JWT for the OAuth user
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET || 'fallback_secret', {
+      expiresIn: process.env.JWT_EXPIRY || '24h',
+    });
+    
+    // Send welcome email
+    try {
+      EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'GitHub OAuth'));
+    } catch (e) {
+      console.error('[GitHubOAuth] Email notification failed:', e);
+    }
+    
+    // Redirect with token
+    res.redirect(`${clientUrl}/auth-callback?token=${token}`);
+  } catch (err) {
+    console.error('[GitHubOAuth] Callback Handler Error:', err);
+    res.status(500).json({ error: 'Callback handler failed', details: err.message, stack: err.stack });
+  }
 });
 
 const googleScopes = [
@@ -88,19 +103,34 @@ router.get('/google/callback', (req, res, next) => {
   passport.authenticate('google', { 
     callbackURL,
     failureRedirect: `${clientUrl}/login?error=auth_failed` 
-  })(req, res, next);
-}, function(req, res) {
-  // Generate JWT for the OAuth user
-  const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY || '24h',
+  })(req, res, (err) => {
+    if (err) {
+      console.error('[GoogleOAuth] Authentication Error:', err);
+      return res.status(500).json({ error: 'Authentication failed', details: err.message, stack: err.stack });
+    }
+    next();
   });
-  
-  // Send security alert email
-  EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'Google OAuth'));
-  
-  const redirectPath = normalizeRedirectPath(req.query.state ? decodeURIComponent(req.query.state) : "");
-  const redirectQuery = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : "";
-  res.redirect(`${clientUrl}/auth-callback?token=${token}${redirectQuery}`);
+}, async function(req, res) {
+  try {
+    // Generate JWT for the OAuth user
+    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET || 'fallback_secret', {
+      expiresIn: process.env.JWT_EXPIRY || '24h',
+    });
+    
+    // Send security alert email
+    try {
+      EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'Google OAuth'));
+    } catch (e) {
+      console.error('[GoogleOAuth] Email notification failed:', e);
+    }
+    
+    const redirectPath = normalizeRedirectPath(req.query.state ? decodeURIComponent(req.query.state) : "");
+    const redirectQuery = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : "";
+    res.redirect(`${clientUrl}/auth-callback?token=${token}${redirectQuery}`);
+  } catch (err) {
+    console.error('[GoogleOAuth] Callback Handler Error:', err);
+    res.status(500).json({ error: 'Callback handler failed', details: err.message, stack: err.stack });
+  }
 });
 
 // Get current user session (works for both session-based and JWT)
