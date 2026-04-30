@@ -132,8 +132,11 @@ const getWorkflowById = async (req, res) => {
         if (String(workflow.owner_id) !== String(req.user.id)) {
             return res.status(403).json({ error: "You do not own this workflow" });
         }
-                // Return the definition so React Flow can draw it
-                flowData = activeVersion.definition; 
+        let flowData = {};
+        if (workflow.active_version_id) {
+            const activeVersion = await WorkflowVersion.findById(workflow.active_version_id);
+            if (activeVersion && activeVersion.definition) {
+                flowData = activeVersion.definition;
             }
         }
 
