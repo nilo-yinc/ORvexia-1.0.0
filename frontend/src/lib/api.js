@@ -13,6 +13,12 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  
+  const guestMode = localStorage.getItem('guestMode');
+  if (guestMode === 'true') {
+    config.headers['x-guest-mode'] = 'true';
+  }
+  
   return config;
 });
 
