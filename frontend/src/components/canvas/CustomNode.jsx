@@ -133,73 +133,23 @@ const CustomNode = memo(({ id, data, selected }) => {
         </div>
       </div>
 
-      {/* --- RE-ENGINEERED INDUSTRIAL HANDLES --- */}
+      {/* --- CONNECTION HANDLES --- */}
       
-      {/* Target Handle (Input) */}
+      {/* Target Handle (Input) - Top */}
       {!isTrigger && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-          <Handle
-            type="target"
-            position={Position.Top}
-            className={`
-              !w-4 !h-4 !rounded-none !bg-obsidian !border-2 !border-accent/40 
-              hover:!border-accent hover:!scale-125 !transition-all !duration-200
-              shadow-[0_0_10px_rgba(255,95,31,0.1)]
-            `}
-            style={{ left: '50%', top: '0px' }}
-          >
-            <div className="w-full h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-               <div className="w-1 h-1 bg-accent animate-pulse" />
-            </div>
-          </Handle>
-          <AnimatePresence>
-            {isHovered && (
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 5 }}
-                className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none"
-              >
-                <span className="text-[7px] font-black text-accent uppercase tracking-widest bg-obsidian/80 px-1 py-0.5 whitespace-nowrap">
-                  LINK_IN
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-3 !h-3 !rounded-none !bg-obsidian !border-2 !border-accent/40 hover:!border-accent hover:!scale-150 !transition-all !duration-200 !-top-1.5 !z-20"
+        />
       )}
 
-      {/* Source Handle (Output) */}
-      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className={`
-            !w-4 !h-4 !rounded-none !bg-obsidian !border-2 !border-accent/40 
-            hover:!border-accent hover:!scale-125 !transition-all !duration-200
-            shadow-[0_0_10px_rgba(255,95,31,0.1)]
-          `}
-          style={{ left: '50%', bottom: '0px' }}
-        >
-          <div className="w-full h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-             <Plus className="w-2 h-2 text-accent" />
-          </div>
-        </Handle>
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-none"
-            >
-              <span className="text-[7px] font-black text-accent uppercase tracking-widest bg-obsidian/80 px-1 py-0.5 whitespace-nowrap">
-                LINK_OUT
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Source Handle (Output) - Bottom */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-3 !h-3 !rounded-none !bg-obsidian !border-2 !border-accent/40 hover:!border-accent hover:!scale-150 !transition-all !duration-200 !-bottom-1.5 !z-20"
+      />
       
       {/* Selection Glow */}
       {selected && (
