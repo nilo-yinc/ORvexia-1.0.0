@@ -133,13 +133,11 @@ router.get('/google/callback', (req, res, next) => {
   }
 });
 
+const isLoggedIn = require('../middlewares/isLoggedIn.middleware');
+
 // Get current user session (works for both session-based and JWT)
-router.get('/me', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.json({ success: true, user: req.user });
-    } else {
-        res.status(401).json({ success: false, message: 'Not authenticated' });
-    }
+router.get('/me', isLoggedIn, (req, res) => {
+    res.json({ success: true, user: req.user });
 });
 
 // Logout
