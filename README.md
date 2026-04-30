@@ -1,117 +1,142 @@
-# ⚡ Orvexia: The Agentic Workflow Architect
+<p align="center">
+  <img src="frontend/public/orvexia-logo.png" alt="ORvexia Logo" width="300px" />
+</p>
 
-> **"Turn Natural Language into Executable Infrastructure."**
-> *Automating the robotic drudgery of the 99% using Agentic AI.*
+<h1 align="center">⚡ ORvexia: The Agentic AI Workflow Architect</h1>
 
-## 🚀 The Problem
-In the modern enterprise, **automation is gated by complexity**.
-- **Zapier/n8n** require you to understand "Webhooks", "JSON parsing", and logic loops.
-- **Camunda** requires you to be a BPMN engineer.
-- **Custom Code** requires a development team and weeks of time.
+<p align="center">
+  <strong>"Automate Beyond Limits. Turn Natural Language into Executable Infrastructure."</strong>
+</p>
 
-This leaves 90% of the workforce—Operations Managers, HR Leads, Small Business Owners—stuck doing repetitive manual work because they cannot code.
-
-## 💡 The Solution: Orvexia
-Orvexia is an **Agentic AI Platform** that democratizes software engineering. It allows users to build enterprise-grade automation workflows simply by speaking.
-
-**We don't just "chat." We build.**
-Our AI acts as a **Senior Workflow Architect** that translates intent into infrastructure, connects APIs, handles error logic, and deploys live workflows in seconds.
+<p align="center">
+  <img src="https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge" alt="Stack" />
+  <img src="https://img.shields.io/badge/AI-Agentic-orange?style=for-the-badge" alt="AI" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+</p>
 
 ---
 
-## 🛠️ Tech Stack
+## 🌐 Overview
 
-### **Frontend (The Canvas)**
-- **Framework:** React.js (Vite)
-- **Visualization:** `React Flow` (for rendering the interactive node graph)
-- **Styling:** Tailwind CSS + Framer Motion
-- **State Management:** Zustand / React Context
+**ORvexia** is a high-fidelity, agentic AI platform designed to democratize complex software automation. By combining natural language processing with a robust node-based execution engine, ORvexia allows non-technical users to build, monitor, and scale enterprise-grade automation architectures simply by describing their intent.
 
-### **Backend (The Brain)**
-- **API:** FastAPI (Python)
-- **AI Engine:** LangChain + Groq (Llama 3 70B)
-- **Validation:** Pydantic (Strict Schema Enforcement)
-- **Database:** PostgreSQL / SQLite (for persistent workflow state)
+Unlike traditional automation tools that require deep knowledge of webhooks and JSON, ORvexia's **Agentic Copilot** acts as a Senior Workflow Architect, translating abstract ideas into precise, connected, and executable logical flows.
 
-### **Agentic Capabilities**
-- **Orchestration:** LangGraph (Stateful multi-actor applications)
-- **Tooling:** Custom "Tool Sandbox" (Gmail, GitHub, Notion, Slack, Vercel APIs)
-- **Memory:** Context-aware history (The AI remembers previous modifications)
+---
+
+## 🖼️ Platform Preview
+
+<p align="center">
+  <!-- PLACEHOLDER FOR MAIN DASHBOARD IMAGE -->
+  <img src="https://via.placeholder.com/800x450.png?text=ORvexia+Dashboard+Preview" alt="ORvexia Dashboard" width="100%" />
+</p>
+
+<p align="center">
+  <em>(Space for Real-time Dashboard Analytics)</em>
+</p>
 
 ---
 
 ## ✨ Key Features
 
-### 1. 🧠 AI Builder (Text-to-Software)
-The core of Orvexia. Users type a command like:
-> *"When I get an email about a bug, summarize it with AI, log it to Notion, and alert the #dev-team on Slack."*
-The Agent intelligently selects the right tools, draws the connections, and configures the payloads automatically.
+### 🧠 1. Agentic AI Copilot (Text-to-Workflow)
+The core engine of ORvexia. Describe your automation goal in plain English, and the AI will:
+- Select appropriate API integrations.
+- Configure data mapping between nodes.
+- Handle error retry logic and conditional branches.
+- Deploy a draft architecture in seconds.
 
-### 2. 🎨 Visual Workflow Editor
-We provide a "Glass Box" experience. Users can see exactly what the AI built using a drag-and-drop node graph (powered by React Flow). This ensures trust and allows for manual fine-tuning.
+### 🎨 2. High-Fidelity Visual Canvas
+A "Glass Box" engineering experience powered by **React Flow**.
+- **Interactive Node Graph**: Drag, drop, and connect services manually for fine-tuning.
+- **Live State Updates**: Watch data flow through your architecture in real-time.
+- **Glassmorphic UI**: A premium, futuristic design aesthetic with GSAP & Framer Motion animations.
 
-### 3. 📊 Real-Time Analytics Dashboard
-Track the ROI of automation.
-- **Time Saved:** Calculated based on average manual execution time.
-- **Success Rate:** Monitor workflow health.
-- **Execution Trends:** See which workflows are driving value.
+### 🏪 3. Blueprint System Library
+Access a curated gallery of pre-built automation templates.
+- **Universal Blueprints**: Start from community-proven architectures.
+- **One-Click Deployment**: Use templates for Gmail, Slack, Notion, and more.
+- **Custom Sharing**: Publish your own architectures to the community library.
 
-### 4. 🛡️ Consultant Mode (Proactive AI)
-Our AI doesn't just execute; it advises. If a user builds a risky workflow, the AI suggests improvements:
-> *"I noticed you are creating a GitHub issue but didn't add a notification step. Should I add a Slack alert for you?"*
-
----
-
-## 🔒 Security & Reliability
-We solve the "AI Hallucination" problem with a 3-Layer Defense System:
-
-1.  **Strict Schema Validation (Pydantic):** The AI is forced to output strict JSON matching our internal schemas. If it tries to invent a non-existent parameter, the backend rejects it before it reaches the UI.
-2.  **Deterministic Tool Sandboxing:** The AI cannot execute arbitrary code. It can *only* call pre-defined, safe functions from our `TOOLS_DB`.
-3.  **Human-in-the-Loop:** We favor "Co-piloting" over "Auto-piloting." The AI drafts the blueprint, but the human must verify the visual diagram before deployment.
+### 🛡️ 4. Tiered Infrastructure Gating
+Professional-grade subscription management:
+- **Basic**: 1 active workflow with core integrations.
+- **Pro**: Unlimited workflows with advanced agentic capabilities.
+- **Elite**: Priority execution, custom LLM fine-tuning, and enterprise tools.
 
 ---
 
-## 🆚 Comparison: Why Orvexia?
+## 🛠️ Technology Stack
 
-| Feature | 🐢 Traditional (Zapier/Camunda) | ⚡ Orvexia (Agentic AI) |
-| :--- | :--- | :--- |
-| **Creation Speed** | Hours (Manual Drag & Drop) | **Seconds** (Natural Language) |
-| **User Requirement** | Technical (Logic/APIs) | **Non-Technical** (Intent only) |
-| **Flexibility** | Rigid (Static Workflows) | **Fluid** (Self-Correcting AI) |
-| **Cost** | High Engineering Overhead | **Zero** Engineering Overhead |
+### **Frontend (The Interface)**
+- **Framework**: [React 18](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **Visuals**: [React Flow](https://reactflow.dev/) (Infrastructure Mapping)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/) & [GSAP](https://greensock.com/gsap/)
+- **State**: React Context API
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+### **Backend (The Core)**
+- **Runtime**: [Node.js](https://nodejs.org/)
+- **Framework**: [Express.js](https://expressjs.com/)
+- **Database**: [MongoDB](https://www.mongodb.com/) (Mongoose ODM)
+- **Authentication**: JWT (JSON Web Tokens) with Secure Cookie persistence.
 
 ---
 
-## 💰 Business Value
-- **Zero-Friction Accessibility:** Unlocks automation for the 500M+ non-technical knowledge workers.
-- **Instant ROI:** Reduces "Time-to-Automation" by 99%.
-- **Shadow IT Reduction:** Provides a governed, safe environment for employees to build tools without using insecure, unapproved apps.
+## 🏗️ System Architecture
+
+ORvexia follows a modular, layered architecture to ensure scalability and reliability:
+
+```mermaid
+graph TD
+    User((User)) -->|Natural Language| Copilot[AI Agentic Engine]
+    Copilot -->|JSON Blueprint| Canvas[React Flow UI]
+    Canvas -->|API Request| Express[Express Server]
+    Express -->|Auth/Data| MongoDB[(MongoDB Atlas)]
+    Express -->|Execute| NodeEngine[Workflow Execution Engine]
+    NodeEngine -->|API Call| External[External Services: Gmail/Slack/Notion]
+```
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.9+
-- Node.js 16+
-- Groq API Key
+### 1. Prerequisites
+- **Node.js** (v16.0.0 or higher)
+- **MongoDB** (Local or Atlas instance)
+- **Environment Variables**: Create a `.env` in the root (see `.env.example`).
 
-### Installation
+### 2. Installation
 
-1. **Clone the Repo**
-   ```bash
-   git clone [https://github.com/2232def/orvexia.git](https://github.com/2232def/orvexia.git)
-   cd orvexia
+```bash
+# Clone the repository
+git clone https://github.com/niloy-mallik/ORvexia.git
+cd ORvexia
 
-2. **Backend setup**
-   ```bash
-   cd backend
-    pip install -r requirements.txt
-    # Create .env file with GROQ_API_KEY
-    uvicorn app.main:app --reload
+# Install Backend Dependencies
+cd backend/express
+npm install
 
-3. **Frontend setup**
-   ```bash
-   cd frontend
-    npm install
-    npm run dev
+# Install Frontend Dependencies
+cd ../../frontend
+npm install
+```
+
+### 3. Running the Platform
+
+```bash
+# Start Backend (from backend/express)
+npm start
+
+# Start Frontend (from frontend)
+npm run dev
+```
+
+---
+
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+<p align="center">
+  Built with ⚡ by <strong>Niloy Mallik</strong> and the ORvexia Team.
+</p>
