@@ -47,6 +47,11 @@ export const workflowApi = {
     const response = await api.get(`/workflows/executions`, { params: { limit } });
     return response.data;
   },
+  
+  getStats: async () => {
+    const response = await api.get('/workflows/stats');
+    return response.data;
+  },
 
   delete: async (id) => {
     const response = await api.delete(`/workflows/${id}`);

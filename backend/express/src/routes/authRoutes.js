@@ -7,24 +7,41 @@ const router = express.Router();
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // Initiate GitHub Login
-router.get('/github', passport.authenticate('github', { scope: [ 'user:email' ] }));
+router.get('/github', (req, res, next) => {
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const callbackURL = `${protocol}://${host}/api/v1/auth/github/callback`;
+  
+  console.log(`[GitHubOAuth] Initiating login. Host: ${host}, Protocol: ${protocol}, Callback: ${callbackURL}`);
+
+  passport.authenticate('github', { 
+    scope: [ 'user:email' ],
+    callbackURL
+  })(req, res, next);
+});
 
 // GitHub Callback
-router.get('/github/callback', 
-  passport.authenticate('github', { failureRedirect: `${clientUrl}/login?error=auth_failed` }),
-  function(req, res) {
-    // Generate JWT for the OAuth user so the frontend can persist the session
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRY || '24h',
-    });
-    
-    // Send welcome email for new users (fire and forget)
-    EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'GitHub OAuth'));
-    
-    // Redirect with token so the frontend can store it
-    res.redirect(`${clientUrl}/auth-callback?token=${token}`);
-  }
-);
+router.get('/github/callback', (req, res, next) => {
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const callbackURL = `${protocol}://${host}/api/v1/auth/github/callback`;
+
+  passport.authenticate('github', { 
+    callbackURL,
+    failureRedirect: `${clientUrl}/login?error=auth_failed` 
+  })(req, res, next);
+}, function(req, res) {
+  // Generate JWT for the OAuth user
+  const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY || '24h',
+  });
+  
+  // Send welcome email
+  EmailService.send(req.user.email, req.user.name, 'security', buildSecurityPayload(req, 'GitHub OAuth'));
+  
+  // Redirect with token
+  res.redirect(`${clientUrl}/auth-callback?token=${token}`);
+});
 
 const googleScopes = [
   'profile',

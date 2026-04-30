@@ -8,12 +8,14 @@ const {
   getWorkflowExecutions,
   getGlobalExecutions,
   deleteWorkflow,
-  toggleWorkflow
+  toggleWorkflow,
+  getDashboardStats
 } = require("../controllers/workflowController");
 const isLoggedIn = require("../middlewares/isLoggedIn.middleware");
 
 router.post("/", isLoggedIn, createWorkflow);
 router.get("/", isLoggedIn, getworkflows);
+router.get("/stats", isLoggedIn, getDashboardStats);
 router.get("/executions", isLoggedIn, getGlobalExecutions);
 router.get("/:id", isLoggedIn, getWorkflowById);
 router.post("/:id/execute", isLoggedIn, executeWorkflow);

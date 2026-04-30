@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { workflowApi } from '../lib/api';
+import api, { workflowApi } from '../lib/api';
 import {
   Workflow,
   Sparkles,
@@ -122,11 +122,13 @@ const KineticButton = ({ children, primary = false, onClick, className = "" }) =
 export const Home = () => {
   const navigate = useNavigate();
   const [recentActivity, setRecentActivity] = React.useState([]);
+  const [user, setUser] = React.useState(null);
+  const [health, setHealth] = React.useState({ api: 'Offline', db: 'Offline', workers: 'Syncing' });
   const [stats, setStats] = React.useState([
-    { icon: Workflow, label: 'Active Workflows', value: '0', trend: '0%', isPositive: true },
-    { icon: Play, label: 'Executions', value: '0', trend: '0%', isPositive: true },
-    { icon: CheckCircle2, label: 'Success Rate', value: '0%', trend: '0%', isPositive: true },
-    { icon: Zap, label: 'Resource Load', value: '0%', trend: '0%', isPositive: false },
+    { icon: Workflow, label: 'Active Workflows', value: '0', trend: '...', isPositive: true },
+    { icon: Play, label: 'Executions', value: '0', trend: '...', isPositive: true },
+    { icon: CheckCircle2, label: 'Success Rate', value: '0%', trend: '...', isPositive: true },
+    { icon: Zap, label: 'Resource Load', value: '...', trend: '...', isPositive: true },
   ]);
 
   const timeAgo = (date) => {
@@ -142,10 +144,22 @@ export const Home = () => {
   React.useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [executions, workflows] = await Promise.all([
+        const [executions, statsData, meResponse, healthRes] = await Promise.all([
           workflowApi.getGlobalExecutions(5),
-          workflowApi.getAll()
+          workflowApi.getStats(),
+          api.get('/v1/auth/me').catch(() => ({ data: { user: null } })),
+          api.get('/health').catch(() => ({ data: { ok: false } }))
         ]);
+
+        if (meResponse.data?.user) {
+          setUser(meResponse.data.user);
+        }
+
+        if (healthRes.data?.ok) {
+          setHealth({ api: 'Healthy', db: 'Healthy', workers: 'Active' });
+        } else {
+          setHealth({ api: 'Offline', db: 'Offline', workers: 'Disabled' });
+        }
 
         if (Array.isArray(executions)) {
           setRecentActivity(executions.map(ex => ({
@@ -154,15 +168,38 @@ export const Home = () => {
             time: timeAgo(ex.startedAt),
             type: 'TELEMETRY'
           })));
-          
-          const successCount = executions.filter(e => e.status === 'COMPLETED').length;
-          const rate = executions.length > 0 ? ((successCount / executions.length) * 100).toFixed(1) : 0;
-          
+        }
+
+        if (statsData) {
           setStats([
-            { icon: Workflow, label: 'Active Workflows', value: workflows.filter(w => w.is_active).length.toString(), trend: 'NEW', isPositive: true },
-            { icon: Play, label: 'Executions', value: executions.length.toString(), trend: 'LIVE', isPositive: true },
-            { icon: CheckCircle2, label: 'Success Rate', value: `${rate}%`, trend: 'REAL', isPositive: true },
-            { icon: Zap, label: 'Resource Load', value: 'Minimal', trend: 'LOW', isPositive: true },
+            { 
+              icon: Workflow, 
+              label: 'Active Workflows', 
+              value: statsData.activeWorkflows.toString(), 
+              trend: 'LIVE', 
+              isPositive: true 
+            },
+            { 
+              icon: Play, 
+              label: 'Executions', 
+              value: statsData.totalExecutions.toString(), 
+              trend: 'TOTAL', 
+              isPositive: true 
+            },
+            { 
+              icon: CheckCircle2, 
+              label: 'Success Rate', 
+              value: statsData.successRate, 
+              trend: 'AVG', 
+              isPositive: true 
+            },
+            { 
+              icon: Zap, 
+              label: 'Resource Load', 
+              value: statsData.resourceLoad, 
+              trend: 'HEALTH', 
+              isPositive: true 
+            },
           ]);
         }
       } catch (error) {
@@ -187,7 +224,7 @@ export const Home = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="px-2 py-1 bg-accent/10 border border-accent/30 text-[9px] font-mono text-accent uppercase tracking-widest">
-                Identity: USER_DEMO_01
+                Identity: {user?.name?.toUpperCase() || 'SYSTEM_GUEST'}
               </div>
               <div className="w-8 h-[1px] bg-white/10" />
             </div>
@@ -306,9 +343,9 @@ export const Home = () => {
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-white/30 mb-8">Network Nodes</h2>
               <div className="space-y-6">
                 {[
-                  { label: 'API Gateway', status: 'Healthy', icon: Globe },
-                  { label: 'Worker Clusters', status: 'Syncing', icon: Cpu },
-                  { label: 'Core Database', status: 'Healthy', icon: Database },
+                  { label: 'API Gateway', status: health.api, icon: Globe },
+                  { label: 'Worker Clusters', status: health.workers, icon: Cpu },
+                  { label: 'Core Database', status: health.db, icon: Database },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between group">
                     <div className="flex items-center gap-4">
@@ -317,7 +354,7 @@ export const Home = () => {
                       </div>
                       <span className="text-xs font-bold text-white/60 group-hover:text-white transition-colors">{item.label}</span>
                     </div>
-                    <span className={`text-[9px] font-mono uppercase tracking-widest ${item.status === 'Healthy' ? 'text-accent-success' : 'text-accent'}`}>{item.status}</span>
+                    <span className={`text-[9px] font-mono uppercase tracking-widest ${item.status === 'Healthy' || item.status === 'Active' ? 'text-accent-success' : 'text-accent'}`}>{item.status}</span>
                   </div>
                 ))}
               </div>

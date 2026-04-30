@@ -331,6 +331,34 @@ const toggleTemplate = async (req, res) => {
     }
 };
 
+const getDashboardStats = async (req, res) => {
+    try {
+        const owner_id = req.user.id;
+        const [workflows, totalExecutions, completedExecutions] = await Promise.all([
+            Workflow.find({ owner_id }),
+            Execution.countDocuments({ 
+                workflow_id: { $in: await Workflow.find({ owner_id }).distinct('_id') } 
+            }),
+            Execution.countDocuments({ 
+                workflow_id: { $in: await Workflow.find({ owner_id }).distinct('_id') },
+                status: 'COMPLETED'
+            })
+        ]);
+
+        const activeWorkflows = workflows.filter(w => w.is_active).length;
+        const successRate = totalExecutions > 0 ? ((completedExecutions / totalExecutions) * 100).toFixed(1) : 0;
+
+        res.json({
+            activeWorkflows,
+            totalExecutions,
+            successRate: `${successRate}%`,
+            resourceLoad: 'Optimal' // This could be calculated from system metrics if needed
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     createWorkflow,
     getworkflows,
@@ -338,6 +366,7 @@ module.exports = {
     executeWorkflow,
     getWorkflowExecutions,
     getGlobalExecutions,
+    getDashboardStats,
     deleteWorkflow,
     toggleWorkflow,
     toggleTemplate,
