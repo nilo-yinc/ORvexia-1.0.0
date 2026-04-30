@@ -226,7 +226,7 @@ const SystemSimulation = () => {
 
 export const Landing = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll();
@@ -251,6 +251,13 @@ export const Landing = () => {
         delay: 0.5
       });
     }, heroRef);
+
+    // Handle hash scrolling on load
+    if (window.location.hash === '#pricing') {
+      setTimeout(() => {
+        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    }
 
     return () => ctx.revert();
   }, []);
@@ -439,8 +446,22 @@ export const Landing = () => {
           </p>
         </div>
 
-        <BlueprintGallery onSelectBlueprint={(bp) => {
+        <BlueprintGallery onSelectBlueprint={async (bp) => {
           if (isAuthenticated) {
+            const plan = user?.subscription?.plan || 'FREE';
+            try {
+              const { workflowApi } = await import('../lib/api');
+              const stats = await workflowApi.getStats();
+              const currentWorkflows = stats?.totalWorkflows || 0;
+              
+              if (plan === 'FREE' && currentWorkflows >= 1) {
+                alert("Basic plan is limited to 1 workflow. Upgrade to Pro or Elite to use this template.");
+                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                return;
+              }
+            } catch (error) {
+              console.error("Failed to verify limits:", error);
+            }
             navigate('/workflows/builder', { state: { blueprint: bp } });
           } else {
             navigate('/login', { state: { blueprint: bp } });
@@ -449,7 +470,9 @@ export const Landing = () => {
       </section>
 
       {/* --- PRICING SECTION --- */}
-      <PricingSection />
+      <section id="pricing">
+        <PricingSection />
+      </section>
 
       {/* --- KINETIC CTA --- */}
       <section className="py-60 px-8 relative">
