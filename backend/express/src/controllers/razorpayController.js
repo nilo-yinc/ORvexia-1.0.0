@@ -3,8 +3,8 @@ const crypto = require('crypto');
 const User = require('../models/user.models');
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SVNkGuRWN2NLQG',
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_API_KEY || 'rzp_test_SjgALiWCDFMzmo',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || '6kz5MYXQKGeQn5WkuIL5MFSz',
 });
 
 exports.createOrder = async (req, res) => {

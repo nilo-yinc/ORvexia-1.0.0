@@ -122,7 +122,7 @@ const PricingCard = ({ tier, isYearly, index }) => {
       });
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SVNkGuRWN2NLQG',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_API_KEY || 'rzp_test_SjgALiWCDFMzmo',
         amount: order.amount,
         currency: order.currency,
         name: 'ORvexia',
