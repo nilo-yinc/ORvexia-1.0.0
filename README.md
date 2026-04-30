@@ -1,142 +1,142 @@
 <p align="center">
-  <img src="frontend/public/orvexia-logo.png" alt="ORvexia Logo" width="300px" />
-</p>
-
-<h1 align="center">⚡ ORvexia: The Agentic AI Workflow Architect</h1>
-
-<p align="center">
-  <strong>"Automate Beyond Limits. Turn Natural Language into Executable Infrastructure."</strong>
+  <img src="frontend/public/logo-full.svg" alt="ORvexia Logo" width="450px" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge" alt="Stack" />
-  <img src="https://img.shields.io/badge/AI-Agentic-orange?style=for-the-badge" alt="AI" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+  <strong>"Automate Beyond Limits. Build Agentic Architectures with Natural Language."</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Stack-MERN-FF5F1F?style=for-the-badge&logo=mongodb" alt="Stack" />
+  <img src="https://img.shields.io/badge/AI-LangGraph-000000?style=for-the-badge&logo=google-gemini" alt="AI" />
+  <img src="https://img.shields.io/badge/UI-React_Flow-333333?style=for-the-badge&logo=react" alt="UI" />
+  <img src="https://img.shields.io/badge/Payments-Razorpay-006BFF?style=for-the-badge&logo=razorpay" alt="Payments" />
 </p>
 
 ---
 
-## 🌐 Overview
+## 🌐 The Vision
 
-**ORvexia** is a high-fidelity, agentic AI platform designed to democratize complex software automation. By combining natural language processing with a robust node-based execution engine, ORvexia allows non-technical users to build, monitor, and scale enterprise-grade automation architectures simply by describing their intent.
+**ORvexia** is a high-fidelity, agentic AI platform designed to transform abstract intent into production-ready executable infrastructure. By bridging the gap between natural language and complex logical architectures, ORvexia enables operations teams and developers to build autonomous automation systems without the friction of manual configuration.
 
-Unlike traditional automation tools that require deep knowledge of webhooks and JSON, ORvexia's **Agentic Copilot** acts as a Senior Workflow Architect, translating abstract ideas into precise, connected, and executable logical flows.
-
----
-
-## 🖼️ Platform Preview
-
-<p align="center">
-  <!-- PLACEHOLDER FOR MAIN DASHBOARD IMAGE -->
-  <img src="https://via.placeholder.com/800x450.png?text=ORvexia+Dashboard+Preview" alt="ORvexia Dashboard" width="100%" />
-</p>
-
-<p align="center">
-  <em>(Space for Real-time Dashboard Analytics)</em>
-</p>
+Our platform leverages **LangGraph** and **Google Gemini** to act as a "Senior Workflow Architect"—analyzing requirements, selecting tools, and drawing the blueprint of your automation in real-time.
 
 ---
 
-## ✨ Key Features
+## 🖼️ Platform Experience
 
-### 🧠 1. Agentic AI Copilot (Text-to-Workflow)
-The core engine of ORvexia. Describe your automation goal in plain English, and the AI will:
-- Select appropriate API integrations.
-- Configure data mapping between nodes.
-- Handle error retry logic and conditional branches.
-- Deploy a draft architecture in seconds.
+<p align="center">
+  <img src="https://via.placeholder.com/1000x560.png?text=ORvexia+Platform+Architecture+Preview" alt="ORvexia Platform" width="100%" />
+</p>
 
-### 🎨 2. High-Fidelity Visual Canvas
-A "Glass Box" engineering experience powered by **React Flow**.
-- **Interactive Node Graph**: Drag, drop, and connect services manually for fine-tuning.
-- **Live State Updates**: Watch data flow through your architecture in real-time.
-- **Glassmorphic UI**: A premium, futuristic design aesthetic with GSAP & Framer Motion animations.
+<p align="center">
+  <em>(Space for High-Resolution Dashboard & Builder Screenshots)</em>
+</p>
+
+---
+
+## ✨ Enterprise Features
+
+### 🧠 1. Agentic AI Copilot (Natural Language Orchestration)
+The core of ORvexia is a state-aware agentic engine powered by **LangChain** and **LangGraph**.
+- **Contextual Understanding**: Describe complex cross-platform tasks in one sentence.
+- **Dynamic Tool Selection**: Automatically connects Gmail, Slack, Notion, and custom APIs.
+- **Self-Correcting Blueprints**: The AI validates logic loops and data mappings before deployment.
+
+### 🎨 2. High-Fidelity Visual Architect
+A premium "Glass Box" engineering canvas built with **React Flow**.
+- **Infrastructure Mapping**: Visualize your logic as a native node-based graph.
+- **Micro-Motion UI**: Fluid interactions powered by **GSAP** and **Framer Motion**.
+- **Hot-Reloading Builder**: Watch your architecture build itself as you speak to the AI.
 
 ### 🏪 3. Blueprint System Library
-Access a curated gallery of pre-built automation templates.
-- **Universal Blueprints**: Start from community-proven architectures.
-- **One-Click Deployment**: Use templates for Gmail, Slack, Notion, and more.
-- **Custom Sharing**: Publish your own architectures to the community library.
+Access a curated ecosystem of pre-engineered architectures.
+- **One-Click Deployments**: Instantly launch proven flows for Sales, HR, and Productivity.
+- **Community Templates**: Share your best architectures or clone community favorites.
+- **Version Control**: Manage and iterate on your workflow versions seamlessly.
 
-### 🛡️ 4. Tiered Infrastructure Gating
-Professional-grade subscription management:
-- **Basic**: 1 active workflow with core integrations.
-- **Pro**: Unlimited workflows with advanced agentic capabilities.
-- **Elite**: Priority execution, custom LLM fine-tuning, and enterprise tools.
+### 💳 4. Subscription & Infrastructure Management
+Professional-grade scaling with **Razorpay** integration.
+- **Basic Tier**: 1 high-availability workflow for personal automation.
+- **Pro & Elite Tiers**: Unlimited architectures, priority execution, and advanced agentic tools.
+- **Real-time Monitoring**: Track execution logs and success rates via **Socket.io** streams.
 
 ---
 
 ## 🛠️ Technology Stack
 
-### **Frontend (The Interface)**
-- **Framework**: [React 18](https://reactjs.org/) + [Vite](https://vitejs.dev/)
-- **Visuals**: [React Flow](https://reactflow.dev/) (Infrastructure Mapping)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/) & [GSAP](https://greensock.com/gsap/)
-- **State**: React Context API
-- **Icons**: [Lucide React](https://lucide.dev/)
+### **Frontend Infrastructure**
+- **Core**: [React 19](https://react.dev/) + [Vite 7](https://vitejs.dev/)
+- **Visuals**: [React Flow](https://reactflow.dev/) (Graph Editor)
+- **Design**: [Tailwind CSS](https://tailwindcss.com/) + [Lucide Icons](https://lucide.dev/)
+- **Motion**: [Framer Motion](https://www.framer.com/motion/) & [GSAP](https://gsap.com/)
+- **Analytics**: [Recharts](https://recharts.org/)
 
-### **Backend (The Core)**
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (Mongoose ODM)
-- **Authentication**: JWT (JSON Web Tokens) with Secure Cookie persistence.
+### **Backend & AI Core**
+- **Engine**: [Node.js](https://nodejs.org/) + [Express 5](https://expressjs.com/)
+- **Agentic AI**: [LangGraph](https://python.langchain.com/docs/langgraph) + [Gemini Pro](https://deepmind.google/technologies/gemini/)
+- **Database**: [MongoDB Atlas](https://www.mongodb.com/) (Mongoose 9)
+- **Auth**: [Passport.js](https://www.passportjs.org/) (OAuth 2.0)
+- **Payments**: [Razorpay API](https://razorpay.com/)
 
 ---
 
-## 🏗️ System Architecture
-
-ORvexia follows a modular, layered architecture to ensure scalability and reliability:
+## 🏗️ Technical Architecture
 
 ```mermaid
-graph TD
-    User((User)) -->|Natural Language| Copilot[AI Agentic Engine]
-    Copilot -->|JSON Blueprint| Canvas[React Flow UI]
-    Canvas -->|API Request| Express[Express Server]
-    Express -->|Auth/Data| MongoDB[(MongoDB Atlas)]
-    Express -->|Execute| NodeEngine[Workflow Execution Engine]
-    NodeEngine -->|API Call| External[External Services: Gmail/Slack/Notion]
+graph LR
+    User((User)) -->|NL Command| Agent[Agentic Engine - LangGraph]
+    Agent -->|State Update| Socket[Socket.io Stream]
+    Socket -->|Live Build| UI[React Flow Canvas]
+    UI -->|Persist| API[Express API]
+    API -->|Schema| DB[(MongoDB Atlas)]
+    API -->|Trigger| Exec[Execution Runtime]
+    Exec -->|Action| Apps[External: Gmail/Slack/Notion]
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-- **Node.js** (v16.0.0 or higher)
-- **MongoDB** (Local or Atlas instance)
-- **Environment Variables**: Create a `.env` in the root (see `.env.example`).
+### 1. Requirements
+- Node.js **v18+**
+- MongoDB **v6.0+**
+- API Keys: Google Gemini, Razorpay, and Passport Providers.
 
-### 2. Installation
+### 2. Quick Install
 
 ```bash
-# Clone the repository
+# Clone and enter directory
 git clone https://github.com/niloy-mallik/ORvexia.git
 cd ORvexia
 
-# Install Backend Dependencies
+# Backend Initialization
 cd backend/express
 npm install
+cp .env.example .env
 
-# Install Frontend Dependencies
+# Frontend Initialization
 cd ../../frontend
 npm install
 ```
 
-### 3. Running the Platform
+### 3. Launch
 
 ```bash
-# Start Backend (from backend/express)
-npm start
+# Terminal 1: Backend
+cd backend/express
+npm run dev
 
-# Start Frontend (from frontend)
+# Terminal 2: Frontend
+cd frontend
 npm run dev
 ```
 
 ---
 
 ## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Licensed under the MIT License. Copyright © 2026 **Niloy Mallik**.
 
 <p align="center">
-  Built with ⚡ by <strong>Niloy Mallik</strong> and the ORvexia Team.
+  Built for the 1% of Workflow Architects who want to automate the other 99%.
 </p>

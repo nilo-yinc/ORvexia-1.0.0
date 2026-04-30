@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <!-- Hexagon Icon -->
+  <g transform="translate(10, 10) scale(0.8)">
+    <path d="M50 5 L90 25 L90 75 L50 95 L10 75 L10 25 Z" fill="none" stroke="#FF5F1F" stroke-width="8" stroke-linejoin="round" />
+    <rect x="35" y="35" width="30" height="30" fill="#FF5F1F" transform="rotate(45 50 50)" />
+  </g>
+  <!-- Text "ORVEXIA" -->
+  <text x="100" y="65" font-family="Arial, sans-serif" font-weight="900" font-size="48" fill="white" letter-spacing="-2">
+    ORV<tspan fill="#FF5F1F">EXIA</tspan>
+  </text>
+</svg>
