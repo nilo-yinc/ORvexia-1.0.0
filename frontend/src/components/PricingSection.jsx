@@ -257,6 +257,11 @@ const PricingSection = () => {
 
   useEffect(() => {
     const fetchUserPlan = async () => {
+      if (!localStorage.getItem('token')) {
+        setUserPlan(null);
+        return;
+      }
+
       try {
         const { data } = await api.get('/v1/auth/me');
         if (data?.user?.subscription) {
@@ -264,8 +269,7 @@ const PricingSection = () => {
         } else {
           setUserPlan('FREE'); // Logged in but no sub object? Default to FREE
         }
-      } catch (err) {
-        console.error('Failed to fetch user plan');
+      } catch {
         setUserPlan(null); // Not logged in or error
       }
     };

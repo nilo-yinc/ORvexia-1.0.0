@@ -1,24 +1,32 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { Landing } from './pages/Landing';
-import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { Home } from './pages/Home';
-import { Workflows } from './pages/Workflows';
-import { WorkflowBuilder } from './pages/WorkflowBuilder';
-import { AIBuilder } from './pages/AIBuilder';
-import { Analytics } from './pages/Analytics';
-import { Templates } from './pages/Templates';
-import { Settings } from './pages/Settings';
-import { Tables } from './pages/Tables';
-import { Forms } from './pages/Forms';
-import { Interfaces } from './pages/Interfaces';
-import { Transfer } from './pages/Transfer';
-import { Apps } from './pages/Apps';
-import { Agents } from './pages/Agents';
-import { AppLayout } from './layouts/AppLayout';
-import AuthCallback from './pages/AuthCallback';
+
+const Landing = lazy(() => import('./pages/Landing').then((module) => ({ default: module.Landing })));
+const Login = lazy(() => import('./pages/Login').then((module) => ({ default: module.Login })));
+const Signup = lazy(() => import('./pages/Signup').then((module) => ({ default: module.Signup })));
+const Home = lazy(() => import('./pages/Home').then((module) => ({ default: module.Home })));
+const Workflows = lazy(() => import('./pages/Workflows').then((module) => ({ default: module.Workflows })));
+const WorkflowBuilder = lazy(() => import('./pages/WorkflowBuilder').then((module) => ({ default: module.WorkflowBuilder })));
+const AIBuilder = lazy(() => import('./pages/AIBuilder').then((module) => ({ default: module.AIBuilder })));
+const Analytics = lazy(() => import('./pages/Analytics').then((module) => ({ default: module.Analytics })));
+const Templates = lazy(() => import('./pages/Templates').then((module) => ({ default: module.Templates })));
+const Settings = lazy(() => import('./pages/Settings').then((module) => ({ default: module.Settings })));
+const Tables = lazy(() => import('./pages/Tables').then((module) => ({ default: module.Tables })));
+const Forms = lazy(() => import('./pages/Forms').then((module) => ({ default: module.Forms })));
+const Interfaces = lazy(() => import('./pages/Interfaces').then((module) => ({ default: module.Interfaces })));
+const Transfer = lazy(() => import('./pages/Transfer').then((module) => ({ default: module.Transfer })));
+const Apps = lazy(() => import('./pages/Apps').then((module) => ({ default: module.Apps })));
+const Agents = lazy(() => import('./pages/Agents').then((module) => ({ default: module.Agents })));
+const AppLayout = lazy(() => import('./layouts/AppLayout').then((module) => ({ default: module.AppLayout })));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-obsidian">
+    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -52,7 +60,8 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <Routes>
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
             {/* Public routes - always accessible */}
             <Route path="/" element={<Landing />} />
             <Route
@@ -115,7 +124,8 @@ function App() {
 
             {/* Catch all - redirect to landing */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

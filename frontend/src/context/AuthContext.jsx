@@ -4,18 +4,14 @@ import axios from 'axios';
 const AuthContext = createContext();
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000');
+const AUTH_USER_KEY = 'authUser';
+const REQUEST_TIMEOUT_MS = 8000;
 
 // Axios instance for user routes (login, register, profile)
 const api = axios.create({
   baseURL: API_BASE + '/api/v1/users',
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// Axios instance for auth/session routes (Google/GitHub OAuth, /me)
-const authApi = axios.create({
-  baseURL: API_BASE + '/api/v1/auth',
-  withCredentials: true,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -33,7 +29,24 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const isGuest = localStorage.getItem('guestMode');
+    if (isGuest) {
+      return { id: 'guest', name: 'Guest User', email: 'guest@orvexia.local', role: 'guest' };
+    }
+
+    const token = localStorage.getItem('token');
+    const cachedUser = localStorage.getItem(AUTH_USER_KEY);
+    if (token && cachedUser) {
+      try {
+        return JSON.parse(cachedUser);
+      } catch {
+        localStorage.removeItem(AUTH_USER_KEY);
+      }
+    }
+
+    return null;
+  });
   const [loading, setLoading] = useState(true);
 
   // On mount: check if the user has an active session (JWT or OAuth session)
@@ -42,46 +55,51 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
-    setLoading(true);
-    try {
-      // First try JWT-based auth (manual login)
-      const token = localStorage.getItem('token');
-      if (token) {
-        const response = await api.get('/get-profile');
-        if (response.data && response.data.status) {
-          setUser(response.data.user);
-          setLoading(false);
-          return;
-        }
-      }
+    const token = localStorage.getItem('token');
+    const isGuest = localStorage.getItem('guestMode');
 
-      // Then try session-based auth (Google/GitHub OAuth)
-      const sessionRes = await authApi.get('/me');
-      if (sessionRes.data && sessionRes.data.success) {
-        const u = sessionRes.data.user;
-        setUser({
-          id: u._id,
-          name: u.name,
-          email: u.email,
-          avatar: u.avatar || null,
-          role: u.role || 'user',
-          subscription: u.subscription || { plan: 'FREE', status: 'ACTIVE' },
-          provider: u.googleId ? 'google' : u.githubId ? 'github' : 'local',
-        });
+    if (isGuest) {
+      setUser({ id: 'guest', name: 'Guest User', email: 'guest@orvexia.local', role: 'guest' });
+      setLoading(false);
+      return;
+    }
+
+    if (!token) {
+      setUser(null);
+      localStorage.removeItem(AUTH_USER_KEY);
+      setLoading(false);
+      return;
+    }
+
+    const cachedUser = localStorage.getItem(AUTH_USER_KEY);
+    if (cachedUser) {
+      try {
+        setUser(JSON.parse(cachedUser));
+      } catch {
+        localStorage.removeItem(AUTH_USER_KEY);
+      }
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const response = await api.get('/get-profile');
+      if (response.data && response.data.status) {
+        setUser(response.data.user);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.data.user));
         setLoading(false);
         return;
       }
     } catch (error) {
-      // Not authenticated - that's fine
+      const status = error.response?.status;
+      if (!cachedUser || status === 401 || status === 403) {
+        setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem(AUTH_USER_KEY);
+      }
     }
-    
-    // Check if guest mode
-    const isGuest = localStorage.getItem('guestMode');
-    if (isGuest) {
-      setUser({ id: 'guest', name: 'Guest User', email: 'guest@orvexia.local', role: 'guest' });
-    } else {
-      setUser(null);
-    }
+
     setLoading(false);
   };
 
@@ -96,6 +114,10 @@ export const AuthProvider = ({ children }) => {
           ...response.data.user,
           avatar: response.data.user.avatar || null,
         });
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify({
+          ...response.data.user,
+          avatar: response.data.user.avatar || null,
+        }));
         return response.data;
       }
       throw new Error(response.data.message || 'Login failed');
@@ -122,24 +144,24 @@ export const AuthProvider = ({ children }) => {
 
   const loginAsGuest = () => {
     localStorage.setItem('guestMode', 'true');
+    localStorage.removeItem('token');
+    localStorage.removeItem(AUTH_USER_KEY);
     setUser({ id: 'guest', name: 'Guest User', email: 'guest@orvexia.local', role: 'guest' });
   };
 
   const logout = async () => {
     try {
-      // Try JWT logout
       const token = localStorage.getItem('token');
       if (token) {
         await api.post('/logout');
       }
-      // Try session logout (for OAuth users)
-      await authApi.post('/logout');
-    } catch (error) {
+    } catch {
       // Ignore errors during logout
     }
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('guestMode');
+    localStorage.removeItem(AUTH_USER_KEY);
   };
 
   const updateProfile = async (name, avatar) => {
@@ -148,6 +170,11 @@ export const AuthProvider = ({ children }) => {
       if (response.data.status) {
         setUser(prev => ({
           ...prev,
+          ...response.data.user,
+          avatar: response.data.user.avatar || null,
+        }));
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify({
+          ...user,
           ...response.data.user,
           avatar: response.data.user.avatar || null,
         }));
@@ -161,6 +188,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserProfile = (updatedUser) => {
     setUser(prev => ({ ...prev, ...updatedUser }));
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...user, ...updatedUser }));
   };
 
   const value = {

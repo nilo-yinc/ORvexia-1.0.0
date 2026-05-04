@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import api, { workflowApi } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { API_BASE, workflowApi } from '../lib/api';
 import {
   Workflow,
   Sparkles,
@@ -121,8 +122,8 @@ const KineticButton = ({ children, primary = false, onClick, className = "" }) =
 
 export const Home = () => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [recentActivity, setRecentActivity] = React.useState([]);
-  const [user, setUser] = React.useState(null);
   const [health, setHealth] = React.useState({ api: 'Offline', db: 'Offline', workers: 'Syncing' });
   const [stats, setStats] = React.useState([
     { icon: Workflow, label: 'Active Workflows', value: '0', trend: '...', isPositive: true },
@@ -135,7 +136,7 @@ export const Home = () => {
   const handleCreateWorkflow = async () => {
     try {
       const stats = await workflowApi.getStats();
-      const plan = String(user?.subscription?.plan || user?.plan || 'FREE').toUpperCase();
+      const plan = String(authUser?.subscription?.plan || authUser?.plan || 'FREE').toUpperCase();
       const currentWorkflows = Math.max(stats?.totalWorkflows || 0, totalWorkflows || 0);
 
       const isPremium = ['PRO', 'ELITE'].includes(plan);
@@ -168,18 +169,13 @@ export const Home = () => {
   React.useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [executions, statsData, meResponse, healthRes] = await Promise.all([
+        const [executions, statsData, healthRes] = await Promise.all([
           workflowApi.getGlobalExecutions(5),
           workflowApi.getStats(),
-          api.get('/v1/auth/me').catch(() => ({ data: { user: null } })),
-          api.get('/health').catch(() => ({ data: { ok: false } }))
+          fetch(`${API_BASE}/health`).then((res) => res.json()).catch(() => ({ ok: false }))
         ]);
 
-        if (meResponse.data?.user) {
-          setUser(meResponse.data.user);
-        }
-
-        if (healthRes.data?.ok) {
+        if (healthRes.ok) {
           setHealth({ api: 'Healthy', db: 'Healthy', workers: 'Active' });
         } else {
           setHealth({ api: 'Offline', db: 'Offline', workers: 'Disabled' });
@@ -249,7 +245,7 @@ export const Home = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="px-2 py-1 bg-accent/10 border border-accent/30 text-[9px] font-mono text-accent uppercase tracking-widest">
-                Identity: {user?.name?.toUpperCase() || 'SYSTEM_GUEST'}
+                Identity: {authUser?.name?.toUpperCase() || 'SYSTEM_GUEST'}
               </div>
               <div className="w-8 h-[1px] bg-white/10" />
             </div>
@@ -352,8 +348,8 @@ export const Home = () => {
                         <Sparkles className="w-6 h-6 text-accent" />
                      </div>
                      <div>
-                        <p className="text-lg font-black text-white uppercase tracking-tighter">{user?.subscription?.plan || 'BASIC'}</p>
-                        <p className="text-[10px] font-mono text-white/40 uppercase">System Class: {user?.subscription?.status || 'UNRANKED'}</p>
+                        <p className="text-lg font-black text-white uppercase tracking-tighter">{authUser?.subscription?.plan || 'BASIC'}</p>
+                        <p className="text-[10px] font-mono text-white/40 uppercase">System Class: {authUser?.subscription?.status || 'UNRANKED'}</p>
                      </div>
                   </div>
 
@@ -361,8 +357,8 @@ export const Home = () => {
                      <div className="flex justify-between text-[10px] font-mono text-white/40 uppercase tracking-widest">
                         <span>Trial Lifecycle</span>
                         <span className="text-white">{(() => {
-                           if (!user?.subscription?.expiryDate) return 'LIFETIME';
-                           const diff = new Date(user.subscription.expiryDate) - new Date();
+                           if (!authUser?.subscription?.expiryDate) return 'LIFETIME';
+                           const diff = new Date(authUser.subscription.expiryDate) - new Date();
                            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
                            return days > 0 ? `${days} DAYS LEFT` : 'EXPIRED';
                         })()}</span>
@@ -370,7 +366,7 @@ export const Home = () => {
                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
-                          animate={{ width: user?.subscription?.plan !== 'FREE' ? '70%' : '100%' }}
+                          animate={{ width: authUser?.subscription?.plan !== 'FREE' ? '70%' : '100%' }}
                           className="h-full bg-accent" 
                         />
                      </div>
